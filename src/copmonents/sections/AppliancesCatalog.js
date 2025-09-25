@@ -16,6 +16,27 @@ import {
 } from 'reactstrap';
 import { useNavigate } from 'react-router-dom';
 
+const DEFAULT_IMAGE = 'https://via.placeholder.com/400x200?text=No+Image';
+
+function normalizeImageUrl(rawUrl) {
+  if (!rawUrl || !rawUrl.trim()) return DEFAULT_IMAGE;
+  const url = rawUrl.trim();
+  // If starts with http/https, encode and return
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return encodeURI(url);
+  }
+  // If starts with www., assume https
+  if (url.startsWith('www.')) {
+    return encodeURI(`https://${url}`);
+  }
+  // If starts with /, treat as same-origin path
+  if (url.startsWith('/')) {
+    return `${window.location.origin}${encodeURI(url)}`;
+  }
+  // Otherwise, fallback to assuming it's a server-relative path on API host
+  return encodeURI(`http://localhost:5000/${url}`);
+}
+
 const ApplianceCards = () => {
   const [appliances, setAppliances] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,7 +48,7 @@ const ApplianceCards = () => {
   };
 
   useEffect(() => {
-    axios.get('http://localhost:3000/getSpecificAppliance')
+    axios.get('http://localhost:5000/getSpecificAppliance')
       .then((res) => {
         setAppliances(res.data.Appliance || []);
         setLoading(false);
@@ -68,9 +89,13 @@ const ApplianceCards = () => {
           filteredAppliances.map((appliance) => (
             <Col key={appliance._id} className="mb-4">
               <Card className="shadow-sm h-100">
-                {appliance.imgUrl && (
-                  <CardImg top src={appliance.imgUrl} alt={appliance.name} style={{ height: '200px', objectFit: 'cover' }} />
-                )}
+                <CardImg
+                  top
+                  src={normalizeImageUrl(appliance.imgUrl)}
+                  alt={appliance.name}
+                  style={{ height: '200px', objectFit: 'cover' }}
+                  onError={(e) => { e.currentTarget.src = DEFAULT_IMAGE; }}
+                />
                 <CardBody>
                   <CardTitle tag="h5">{appliance.name}</CardTitle>
                   <CardText><strong>Price:</strong> {appliance.price}</CardText>

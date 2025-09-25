@@ -1,7 +1,7 @@
 import React from 'react';
 import '../css/Home.css';
 import Header from '../sections/Header';
-import logo from '../assets/logoPNG.PNG';
+import logo from '../assets/logoPNG.jpg';
 import Footer from '../sections/Footer';
 import {Row,Col} from 'reactstrap';
 import ApplianceCards from '../sections/AppliancesCatalog';

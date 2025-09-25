@@ -9,9 +9,11 @@ const Admin = () => {
   // Local state for form inputs
   const [selectedUser, setSelectedUser] = useState("");
   const [name, setName] = useState("");
+  const [imgUrl, setImgUrl] = useState("");
   const [price, setprice] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [details, setDetails] = useState("");
+  const [available, setAvailable] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [dialogMessage, setDialogMessage] = useState("");
 
@@ -29,34 +31,39 @@ const Admin = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
   
-    if (!selectedUser || !name || !price || !details) {
-      setDialogMessage("Please fill in all fields.");
+    if (!name || !price || !details) {
+      setDialogMessage("Please fill in all required fields.");
       setShowDialog(true);
       return;
     }
   
     const applianceData = {
-      name: selectedUser,
+      name: name,
+      imgUrl: imgUrl,
       price: price,
       details: details,
+      available: available
     };
   
-    axios.post('/api/appliances', applianceData)
+    axios.post('http://localhost:5000/inserAppliance', applianceData)
       .then((response) => {
-        if (response.data.success) {
-          setDialogMessage("Appliance added successfully!");
+        const message = response?.data?.message || (response.status === 201 ? "Appliance added successfully!" : "Failed to add appliance.");
+        setDialogMessage(message);
+        if (response.status === 201) {
           setSelectedUser("");
           setName("");
+          setImgUrl("");
+          setprice("");
           setDueDate("");
           setDetails("");
-        } else {
-          setDialogMessage("Failed to add appliance.");
+          setAvailable(true);
         }
         setShowDialog(true);
       })
       .catch((error) => {
-        console.error("Error adding appliance:", error);
-        setDialogMessage("An error occurred. Please try again later.");
+        console.error("Error adding appliance:", error?.response?.data || error);
+        const message = error?.response?.data?.message || "An error occurred. Please try again later.";
+        setDialogMessage(message);
         setShowDialog(true);
       });
   };
@@ -114,6 +121,24 @@ const Admin = () => {
               
             </div>
 
+            <label className="label">Image Url:</label>
+            <div className="input-group">
+              <div className="input-group-prepend">
+                <span className="input-group-text">
+                  <i className="bi bi-image-fill"></i>
+                </span>
+              </div>
+              <input
+                type="text"
+                id="imgUrl"
+                className="form-control"
+                placeholder="Img Url .."
+                value={imgUrl}
+                onChange={(e) => setImgUrl(e.target.value)}
+                autoComplete="off"
+              />
+            </div>
+
             <label className="label">Name :</label>
             <div className="input-group">
               <div className="input-group-prepend">
@@ -130,22 +155,7 @@ const Admin = () => {
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
-            <label className="label">imgUrl :</label>
-            <div className="input-group">
-              <div className="input-group-prepend">
-                <span className="input-group-text">
-                  <i className="bi bi-sticky-fill"></i>
-                </span>
-              </div>
-              <input
-                type="text"
-                id="title"
-                className="form-control"
-                placeholder="Enter imgUrl .."
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
+            
 
             <label className="label">Price :</label>
             <div className="input-group">
@@ -159,8 +169,8 @@ const Admin = () => {
                 id="title"
                 className="form-control"
                 placeholder="Enter price .."
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={price}
+                onChange={(e) => setprice(e.target.value)}
               />
             </div>
 
@@ -180,6 +190,13 @@ const Admin = () => {
                 onChange={(e) => setDetails(e.target.value)}
               ></textarea>
             </div>
+
+            <div className="form-check my-2">
+			  <input className="form-check-input" type="checkbox" id="availableCheck" checked={available} onChange={(e) => setAvailable(e.target.checked)} />
+			  <label className="form-check-label" htmlFor="availableCheck">
+				Available
+			  </label>
+			</div>
 
             <button onClick={handleSubmit} className="login-btn-admin">Submit</button>
         </div>
