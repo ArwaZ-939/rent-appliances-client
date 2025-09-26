@@ -2,18 +2,17 @@ import React, { useEffect, useState } from 'react';
 import "../css/Admin.css";
 import admin from "../assets/admin.png";
 import axios from "axios";
-import { Modal, ModalHeader, ModalBody, Button } from "reactstrap";
+import { Modal, ModalHeader, ModalBody, Button, Row, Col, Card, CardBody, CardImg, CardTitle, CardText, Spinner, Input, InputGroup, InputGroupText } from "reactstrap";
 import { useNavigate } from 'react-router-dom';
 
 const DeleteAppliances = () => {
-  // Local state for form inputs
-  const [selectedUser, setSelectedUser] = useState("");
-  const [name, setName] = useState("");
-  const [price, setprice] = useState("");
-  const [dueDate, setDueDate] = useState("");
-  const [details, setDetails] = useState("");
+  // State for listing and deleting appliances
+  const [appliances, setAppliances] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [dialogMessage, setDialogMessage] = useState("");
+  const [confirmId, setConfirmId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Fetching user profile and users list from the Redux store
   const Profiler = 'https://static.vecteezy.com/system/resources/thumbnails/013/360/247/small/default-avatar-photo-icon-social-media-profile-sign-symbol-vector.jpg';
@@ -24,39 +23,75 @@ const DeleteAppliances = () => {
   
   const navigate = useNavigate();
   
-  
-  // Handle appliance submission
-  const handleSubmit = (e) => {
-    e.preventDefault();
-  
-    if (!selectedUser || !name || !price || !details) {
-      setDialogMessage("Please fill in all fields.");
-      setShowDialog(true);
-      return;
-    }
-  
-    const applianceData = {
-      name: selectedUser,
-      price: price,
-      details: details,
-    };
-  
-    axios.post('/api/appliances', applianceData)
-      .then((response) => {
-        if (response.data.success) {
-          setDialogMessage("Appliance added successfully!");
-          setSelectedUser("");
-          setName("");
-          setDueDate("");
-          setDetails("");
-        } else {
-          setDialogMessage("Failed to add appliance.");
-        }
-        setShowDialog(true);
+  // Fetch appliances on mount
+  useEffect(() => {
+    axios.get('http://localhost:5000/getSpecificAppliance')
+      .then((res) => {
+        setAppliances(res.data.Appliance || []);
+        setLoading(false);
       })
       .catch((error) => {
-        console.error("Error adding appliance:", error);
-        setDialogMessage("An error occurred. Please try again later.");
+        console.error('Error fetching appliances:', error);
+        setDialogMessage('Failed to load appliances');
+        setShowDialog(true);
+        setLoading(false);
+      });
+  }, []);
+
+  // Delete appliance by id
+  const confirmDelete = (id) => {
+    setConfirmId(id);
+    // Fallback: if modal doesn't show (CSS/Bootstrap not loaded), use native confirm
+    setTimeout(() => {
+      const modalVisible = !!document.querySelector('.modal.show');
+      if (!modalVisible) {
+        if (window.confirm('Are you sure you want to delete this appliance?')) {
+          handleImmediateDelete(id);
+        }
+      }
+    }, 50);
+  };
+  const cancelDelete = () => setConfirmId(null);
+  const handleDelete = () => {
+    if (!confirmId) return;
+    axios.delete(`http://localhost:5000/appliances/${confirmId}`)
+      .then((res) => {
+        setAppliances((prev) => prev.filter(a => a._id !== confirmId));
+        setDialogMessage(res.data?.message || 'Appliance deleted successfully');
+        setShowDialog(true);
+        // Notify other pages (e.g., Home catalog) about the deletion
+        try {
+          window.dispatchEvent(new CustomEvent('appliance:deleted', { detail: { id: confirmId } }));
+          window.dispatchEvent(new Event('appliance:refresh'));
+        } catch (_) {}
+        setConfirmId(null);
+        // Navigate to home to ensure fresh fetch
+        navigate('/home');
+      })
+      .catch((error) => {
+        console.error('Error deleting appliance:', error?.response?.data || error);
+        setDialogMessage(error?.response?.data?.message || 'Failed to delete appliance');
+        setShowDialog(true);
+        setConfirmId(null);
+      });
+  };
+
+  // Immediate delete without modal (useful if modal isn't showing for you)
+  const handleImmediateDelete = (id) => {
+    if (!id) return;
+    axios.delete(`http://localhost:5000/appliances/${id}`)
+      .then((res) => {
+        setAppliances((prev) => prev.filter(a => a._id !== id));
+        setDialogMessage(res.data?.message || 'Appliance deleted successfully');
+        setShowDialog(true);
+        try {
+          window.dispatchEvent(new CustomEvent('appliance:deleted', { detail: { id } }));
+          window.dispatchEvent(new Event('appliance:refresh'));
+        } catch (_) {}
+      })
+      .catch((error) => {
+        console.error('Error deleting appliance:', error?.response?.data || error);
+        setDialogMessage(error?.response?.data?.message || 'Failed to delete appliance');
         setShowDialog(true);
       });
   };
@@ -107,80 +142,40 @@ const DeleteAppliances = () => {
       &nbsp;
       &nbsp;
       <div className="container-admin">
-        <div className="left-section-admin">
+        <div className="left-section-admin" style={{ width: '100%' }}>
           <h2>Delete Appliances</h2>
-            <div className="input-group">
-              
-            </div>
-
-            <label className="label">Name :</label>
-            <div className="input-group">
-              <div className="input-group-prepend">
-                <span className="input-group-text">
-                  <i className="bi bi-sticky-fill"></i>
-                </span>
-              </div>
-              <input
-                type="text"
-                id="title"
-                className="form-control"
-                placeholder="Enter Name .."
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
-            <label className="label">imgUrl :</label>
-            <div className="input-group">
-              <div className="input-group-prepend">
-                <span className="input-group-text">
-                  <i className="bi bi-sticky-fill"></i>
-                </span>
-              </div>
-              <input
-                type="text"
-                id="title"
-                className="form-control"
-                placeholder="Enter imgUrl .."
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
-
-            <label className="label">Price :</label>
-            <div className="input-group">
-              <div className="input-group-prepend">
-                <span className="input-group-text">
-                  <i className="bi bi-sticky-fill"></i>
-                </span>
-              </div>
-              <input
-                type="text"
-                id="title"
-                className="form-control"
-                placeholder="Enter price .."
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
-
-            <label className="label">details :</label>
-            <div className="input-group">
-              <div className="input-group-prepend">
-                <span className="input-group-text">
-                  <i className="bi bi-pencil-fill"></i>
-                </span>
-              </div>
-              <textarea
-                id="task"
-                className="form-control"
-                placeholder="Enter the details .."
-                rows="4"
-                value={details}
-                onChange={(e) => setDetails(e.target.value)}
-              ></textarea>
-            </div>
-
-            <button onClick={handleSubmit} className="login-btn-admin">Submit</button>
+          <InputGroup className="mb-3">
+            <Input type="text" placeholder="Search by name..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            <InputGroupText className="bi bi-search" />
+          </InputGroup>
+          {loading ? (
+            <div className="text-center my-4"><Spinner color="primary" /></div>
+          ) : (
+            <Row xs="1" sm="2" md="3" lg="4">
+              {appliances
+                .filter(a => a.name?.toLowerCase().includes(searchTerm.toLowerCase()))
+                .map((appliance) => (
+                <Col key={appliance._id} className="mb-4">
+                  <Card className="shadow-sm h-100">
+                    {appliance.imgUrl ? (
+                      <CardImg top src={appliance.imgUrl} alt={appliance.name} style={{ height: '160px', objectFit: 'cover' }} />
+                    ) : null}
+                    <CardBody>
+                      <CardTitle tag="h5">{appliance.name}</CardTitle>
+                      <CardText><strong>Price:</strong> {appliance.price}</CardText>
+                      <CardText className="text-truncate" title={appliance.details}>{appliance.details}</CardText>
+                      <div className="d-flex gap-2">
+                        <Button color="danger" size="sm" onClick={() => confirmDelete(appliance._id)} className="bi bi-trash">&nbsp; Delete</Button>
+                      </div>
+                    </CardBody>
+                  </Card>
+                </Col>
+              ))}
+              {appliances.filter(a => a.name?.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
+                <Col><p className="text-center">No appliances found.</p></Col>
+              )}
+            </Row>
+          )}
         </div>
 
         <div className="right-section-admin">

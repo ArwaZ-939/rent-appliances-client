@@ -47,7 +47,8 @@ const ApplianceCards = () => {
     navigate("/Rental");
   };
 
-  useEffect(() => {
+  const fetchAppliances = () => {
+    setLoading(true);
     axios.get('http://localhost:5000/getSpecificAppliance')
       .then((res) => {
         setAppliances(res.data.Appliance || []);
@@ -57,6 +58,26 @@ const ApplianceCards = () => {
         console.error('Error fetching appliances:', error);
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    fetchAppliances();
+  }, []);
+
+  // Listen for deletions performed on other pages (DeleteAppliances)
+  useEffect(() => {
+    const onDeleted = (e) => {
+      const id = e?.detail?.id;
+      if (!id) return;
+      setAppliances(prev => prev.filter(a => a._id !== id));
+    };
+    const onRefresh = () => fetchAppliances();
+    window.addEventListener('appliance:deleted', onDeleted);
+    window.addEventListener('appliance:refresh', onRefresh);
+    return () => {
+      window.removeEventListener('appliance:deleted', onDeleted);
+      window.removeEventListener('appliance:refresh', onRefresh);
+    };
   }, []);
 
   // Filter appliances based on search term (case-insensitive)
