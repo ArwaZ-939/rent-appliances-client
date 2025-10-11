@@ -7,11 +7,13 @@ import { useNavigate } from 'react-router-dom';
 
 const UpdateAppliances = () => {
   // Local state for form inputs
-  const [selectedUser, setSelectedUser] = useState("");
+  const [appliances, setAppliances] = useState([]);
+  const [selectedAppliance, setSelectedAppliance] = useState("");
   const [name, setName] = useState("");
-  const [price, setprice] = useState("");
-  const [dueDate, setDueDate] = useState("");
+  const [imgUrl, setImgUrl] = useState("");
+  const [price, setPrice] = useState("");
   const [details, setDetails] = useState("");
+  const [available, setAvailable] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [dialogMessage, setDialogMessage] = useState("");
 
@@ -23,40 +25,112 @@ const UpdateAppliances = () => {
   console.log(user);
   
   const navigate = useNavigate();
-  
-  
-  // Handle appliance submission
+
+  // Fetch appliances on component mount
+  useEffect(() => {
+    const fetchAppliances = async () => {
+      try {
+        const response = await axios.get('http://localhost:3000/getSpecificAppliance');
+        setAppliances(response.data.Appliance || []);
+      } catch (error) {
+        console.error('Error fetching appliances:', error);
+      }
+    };
+    fetchAppliances();
+  }, []);
+
+  // Handle appliance selection
+  const handleApplianceSelect = (applianceId) => {
+    console.log("Selected appliance ID:", applianceId);
+    const appliance = appliances.find(app => app._id === applianceId);
+    console.log("Found appliance:", appliance);
+    if (appliance) {
+      setSelectedAppliance(applianceId);
+      setName(appliance.name);
+      setImgUrl(appliance.imgUrl || "");
+      setPrice(appliance.price.toString());
+      setDetails(appliance.details);
+      setAvailable(appliance.available);
+      console.log("Appliance data loaded:", {
+        id: applianceId,
+        name: appliance.name,
+        price: appliance.price,
+        details: appliance.details
+      });
+    }
+  };
+
+  // Handle appliance update
   const handleSubmit = (e) => {
     e.preventDefault();
   
-    if (!selectedUser || !name || !price || !details) {
-      setDialogMessage("Please fill in all fields.");
+    if (!selectedAppliance || !name || !price || !details) {
+      setDialogMessage("Please select an appliance and fill in all required fields.");
       setShowDialog(true);
       return;
     }
   
     const applianceData = {
-      name: selectedUser,
+      name: name,
+      imgUrl: imgUrl,
       price: price,
       details: details,
+      available: available,
     };
   
-    axios.post('/api/appliances', applianceData)
-      .then((response) => {
-        if (response.data.success) {
-          setDialogMessage("Appliance added successfully!");
-          setSelectedUser("");
-          setName("");
-          setDueDate("");
-          setDetails("");
-        } else {
-          setDialogMessage("Failed to add appliance.");
-        }
+    console.log("Sending update request:", selectedAppliance, applianceData);
+    
+    // First test if server is reachable
+    axios.put('http://localhost:3000/test-update', {})
+      .then(() => {
+        console.log("Server is reachable, proceeding with update...");
+        return axios.put(`http://localhost:3000/updateAppliance/${selectedAppliance}`, applianceData);
+      })
+      .catch((testError) => {
+        console.error("Server test failed:", testError);
+        setDialogMessage("Cannot connect to server. Please check if server is running.");
         setShowDialog(true);
+        return;
+      })
+      .then((response) => {
+        console.log("Update response:", response);
+        setDialogMessage("Appliance updated successfully!");
+        setSelectedAppliance("");
+        setName("");
+        setImgUrl("");
+        setPrice("");
+        setDetails("");
+        setAvailable(true);
+        setShowDialog(true);
+        
+        // Refresh appliances list
+        const fetchAppliances = async () => {
+          try {
+            const response = await axios.get('http://localhost:3000/getSpecificAppliance');
+            setAppliances(response.data.Appliance || []);
+          } catch (error) {
+            console.error('Error fetching appliances:', error);
+          }
+        };
+        fetchAppliances();
+        
+        // Notify other components that appliances have been updated
+        const timestamp = Date.now().toString();
+        localStorage.setItem('applianceUpdated', timestamp);
+        localStorage.setItem('applianceLastUpdate', timestamp);
+        
+        // Dispatch multiple events to ensure notification
+        window.dispatchEvent(new Event('storage'));
+        window.dispatchEvent(new CustomEvent('applianceUpdated', { detail: { timestamp } }));
+        
+        console.log('Notified components of appliance update');
       })
       .catch((error) => {
-        console.error("Error adding appliance:", error);
-        setDialogMessage("An error occurred. Please try again later.");
+        console.error("Error updating appliance:", error);
+        console.error("Error response:", error.response?.data);
+        console.error("Error status:", error.response?.status);
+        const errorMessage = error.response?.data?.message || error.message || "An error occurred. Please try again later.";
+        setDialogMessage(errorMessage);
         setShowDialog(true);
       });
   };
@@ -109,11 +183,30 @@ const UpdateAppliances = () => {
       <div className="container-admin">
         <div className="left-section-admin">
           <h2>Update Appliances</h2>
+            
+            {/* Appliance Selection */}
+            <label className="label">Select Appliance to Update:</label>
             <div className="input-group">
-              
+              <div className="input-group-prepend">
+                <span className="input-group-text">
+                  <i className="bi bi-list-ul"></i>
+                </span>
+              </div>
+              <select
+                className="form-control"
+                value={selectedAppliance}
+                onChange={(e) => handleApplianceSelect(e.target.value)}
+              >
+                <option value="">Choose an appliance...</option>
+                {appliances.map((appliance) => (
+                  <option key={appliance._id} value={appliance._id}>
+                    {appliance.name} - {appliance.price} 
+                  </option>
+                ))}
+              </select>
             </div>
 
-            <label className="label">Name :</label>
+            <label className="label">Name:</label>
             <div className="input-group">
               <div className="input-group-prepend">
                 <span className="input-group-text">
@@ -122,48 +215,46 @@ const UpdateAppliances = () => {
               </div>
               <input
                 type="text"
-                id="title"
                 className="form-control"
                 placeholder="Enter Name .."
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
-            <label className="label">imgUrl :</label>
+
+            <label className="label">Image URL:</label>
             <div className="input-group">
               <div className="input-group-prepend">
                 <span className="input-group-text">
-                  <i className="bi bi-sticky-fill"></i>
+                  <i className="bi bi-image-fill"></i>
                 </span>
               </div>
               <input
                 type="text"
-                id="title"
                 className="form-control"
-                placeholder="Enter imgUrl .."
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter Image URL .."
+                value={imgUrl}
+                onChange={(e) => setImgUrl(e.target.value)}
               />
             </div>
 
-            <label className="label">Price :</label>
+            <label className="label">OR:</label>
             <div className="input-group">
               <div className="input-group-prepend">
                 <span className="input-group-text">
-                  <i className="bi bi-sticky-fill"></i>
+                  <i className="bi bi-cash"></i>
                 </span>
               </div>
               <input
-                type="text"
-                id="title"
+                type="number"
                 className="form-control"
                 placeholder="Enter price .."
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
               />
             </div>
 
-            <label className="label">details :</label>
+            <label className="label">Details:</label>
             <div className="input-group">
               <div className="input-group-prepend">
                 <span className="input-group-text">
@@ -171,7 +262,6 @@ const UpdateAppliances = () => {
                 </span>
               </div>
               <textarea
-                id="task"
                 className="form-control"
                 placeholder="Enter the details .."
                 rows="4"
@@ -180,7 +270,32 @@ const UpdateAppliances = () => {
               ></textarea>
             </div>
 
-            <button onClick={handleSubmit} className="login-btn-admin">Submit</button>
+            <div className="form-check my-2">
+              <input 
+                className="form-check-input" 
+                type="checkbox" 
+                id="availableCheck" 
+                checked={available} 
+                onChange={(e) => setAvailable(e.target.checked)} 
+              />
+              <label className="form-check-label" htmlFor="availableCheck">
+                Available
+              </label>
+            </div>
+
+            <button 
+              onClick={handleSubmit} 
+              className="login-btn-admin" 
+              style={{ 
+                padding: '15px 30px', 
+                fontSize: '18px', 
+                fontWeight: 'bold',
+                width: '100%',
+                marginTop: '20px'
+              }}
+            >
+              Update Appliance
+            </button>
         </div>
 
         <div className="right-section-admin">

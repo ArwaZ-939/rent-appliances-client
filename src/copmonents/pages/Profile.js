@@ -25,11 +25,30 @@ const Profiler = () => {
       if (username) {
         try {
           const response = await axios.get(`http://localhost:3000/getUserProfile/${username}`);
+          console.log("User profile data:", response.data);
           if (response.data) {
-            setUserInfo(response.data);
+            // Handle different image URL formats
+            let fullImgUrl = "https://static.vecteezy.com/system/resources/thumbnails/013/360/247/small/default-avatar-photo-icon-social-media-profile-sign-symbol-vector.jpg";
+            
+            if (response.data.imgUrl) {
+              // If it's already a full URL, use it directly
+              if (response.data.imgUrl.startsWith('http')) {
+                fullImgUrl = response.data.imgUrl;
+              } else {
+                // If it's a relative path, construct the full URL
+                fullImgUrl = `http://localhost:3000/${response.data.imgUrl}`;
+              }
+            }
+
+            setUserInfo(prev => ({
+              ...prev,
+              ...response.data,
+              imgUrl: fullImgUrl
+            }));
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
+          // Keep default image on error
         }
       }
     };
@@ -46,16 +65,19 @@ const Profiler = () => {
             <div className="d-flex align-items-center gap-4 mb-4">
               <div className="flex-shrink-0">
                 <img
-                  src={
-                    userInfo.imgUrl && userInfo.imgUrl.trim()
-                      ? userInfo.imgUrl
-                      : "https://static.vecteezy.com/system/resources/thumbnails/013/360/247/small/default-avatar-photo-icon-social-media-profile-sign-symbol-vector.jpg"
-                  }
+                  src={userInfo.imgUrl}
                   alt="Profile"
                   width="120"
                   height="120"
                   className="rounded-circle border"
+                  onError={(e) => {
+                    console.log('Image failed to load, using default');
+                    e.target.src = "https://static.vecteezy.com/system/resources/thumbnails/013/360/247/small/default-avatar-photo-icon-social-media-profile-sign-symbol-vector.jpg";
+                  }}
+                  style={{ objectFit: 'cover' }}
                 />
+
+
               </div>
               <div className="w-100">
                 <div className="mb-3">

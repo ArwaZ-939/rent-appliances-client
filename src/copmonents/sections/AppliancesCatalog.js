@@ -14,73 +14,82 @@ import {
   InputGroup,
   InputGroupText
 } from 'reactstrap';
-import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
-const DEFAULT_IMAGE = 'https://via.placeholder.com/400x200?text=No+Image';
-
-function normalizeImageUrl(rawUrl) {
-  if (!rawUrl || !rawUrl.trim()) return DEFAULT_IMAGE;
-  const url = rawUrl.trim();
-  // If starts with http/https, encode and return
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return encodeURI(url);
-  }
-  // If starts with www., assume https
-  if (url.startsWith('www.')) {
-    return encodeURI(`https://${url}`);
-  }
-  // If starts with /, treat as same-origin path
-  if (url.startsWith('/')) {
-    return `${window.location.origin}${encodeURI(url)}`;
-  }
-  // Otherwise, fallback to assuming it's a server-relative path on API host
-  return encodeURI(`http://localhost:5000/${url}`);
-}
-
-const ApplianceCards = () => {
+const ApplianceCards = ({ onRentClick }) => {
   const [appliances, setAppliances] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const navigate = useNavigate();
+  const [suggestions, setSuggestions] = useState([]);
+  const location = useLocation();
 
-  const handelBooking = () => {
-    navigate("/Rental");
-  };
-
-  const fetchAppliances = () => {
-    setLoading(true);
-    axios.get('http://localhost:5000/getSpecificAppliance')
-      .then((res) => {
-        setAppliances(res.data.Appliance || []);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error('Error fetching appliances:', error);
-        setLoading(false);
-      });
+  const fetchAppliances = async () => {
+    try {
+      console.log('Fetching appliances from server...');
+      const response = await axios.get('http://localhost:3000/getSpecificAppliance');
+      console.log('Received appliances:', response.data.Appliance);
+      setAppliances(response.data.Appliance || []);
+    } catch (error) {
+      console.error('Error fetching appliances:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     fetchAppliances();
+
+    const interval = setInterval(() => {
+      console.log('Auto-refreshing appliances...');
+      fetchAppliances();
+    }, 10000);
+
+    return () => clearInterval(interval);
   }, []);
 
-  // Listen for deletions performed on other pages (DeleteAppliances)
   useEffect(() => {
-    const onDeleted = (e) => {
-      const id = e?.detail?.id;
-      if (!id) return;
-      setAppliances(prev => prev.filter(a => a._id !== id));
-    };
-    const onRefresh = () => fetchAppliances();
-    window.addEventListener('appliance:deleted', onDeleted);
-    window.addEventListener('appliance:refresh', onRefresh);
-    return () => {
-      window.removeEventListener('appliance:deleted', onDeleted);
-      window.removeEventListener('appliance:refresh', onRefresh);
-    };
-  }, []);
+    if (location.pathname === '/home' || location.pathname === '/') {
+      fetchAppliances();
+    }
+  }, [location.pathname]);
 
-  // Filter appliances based on search term (case-insensitive)
+  useEffect(() => {
+    if (searchTerm.trim() === '') {
+      setSuggestions([]);
+      return;
+    }
+
+    const fetchSuggestions = async () => {
+      try {
+        const res = await axios.get(`http://localhost:3000/api/suggestions?keyword=${searchTerm}`);
+        setSuggestions(res.data);
+      } catch (error) {
+        console.error('Error fetching suggestions:', error);
+      }
+    };
+
+    fetchSuggestions();
+  }, [searchTerm]);
+
+  const handleSuggestionClick = (suggestion) => {
+    setSearchTerm(suggestion);
+    setSuggestions([]);
+  };
+
+  const formatPrice = (price) => {
+    if (!price) return '';
+    const cleanPrice = price.toString().trim();
+    return cleanPrice.toUpperCase().includes('OR') ? cleanPrice : `${cleanPrice} OR`;
+  };
+
+  const handleRentClickInternal = (appliance) => {
+    if (onRentClick) {
+      const priceMatch = appliance.price.toString().match(/\d+/);
+      const price = priceMatch ? parseInt(priceMatch[0]) : 0;
+      onRentClick(price, appliance);
+    }
+  };
+
   const filteredAppliances = appliances.filter(appliance =>
     appliance.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -91,40 +100,79 @@ const ApplianceCards = () => {
 
   return (
     <div className="mt-3">
-      {/* Search Box */}
-      <InputGroup className="mb-3">
-  <Input
-    type="text"
-    placeholder="Search appliances..."
-    value={searchTerm}
-    onChange={e => setSearchTerm(e.target.value)}
-  />
-  <InputGroupText style={{ color: 'gray', marginLeft: '8px' }}>🔍</InputGroupText>
-</InputGroup>
+      <div style={{ position: 'relative', maxWidth: '400px', margin: '0 auto' }}>
+        <InputGroup className="mb-2">
+          <Input
+            type="text"
+            placeholder="Search appliances..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+          <InputGroupText style={{ color: 'gray', marginLeft: '8px' }}>🔍</InputGroupText>
+        </InputGroup>
 
-      <br/>
-      <br/>
+        {suggestions.length > 0 && (
+          <ul style={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            right: 0,
+            zIndex: 1000,
+            background: '#fff',
+            border: '1px solid #ccc',
+            listStyle: 'none',
+            padding: '5px',
+            margin: 0,
+            maxHeight: '150px',
+            overflowY: 'auto',
+          }}>
+            {suggestions.map((item, idx) => (
+              <li
+                key={idx}
+                onClick={() => handleSuggestionClick(item)}
+                style={{
+                  padding: '8px',
+                  cursor: 'pointer',
+                  borderBottom: '1px solid #eee',
+                  fontSize: '14px'
+                }}
+              >
+                {item}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <br /><br />
 
       <Row xs="1" sm="2" md="3" lg="4">
         {filteredAppliances.length > 0 ? (
           filteredAppliances.map((appliance) => (
             <Col key={appliance._id} className="mb-4">
               <Card className="shadow-sm h-100">
-                <CardImg
-                  top
-                  src={normalizeImageUrl(appliance.imgUrl)}
-                  alt={appliance.name}
-                  style={{ height: '200px', objectFit: 'cover' }}
-                  onError={(e) => { e.currentTarget.src = DEFAULT_IMAGE; }}
-                />
+                {appliance.imgUrl && (
+                  <CardImg
+                    top
+                    src={appliance.imgUrl}
+                    alt={appliance.name}
+                    style={{ height: '200px', objectFit: 'cover' }}
+                  />
+                )}
                 <CardBody>
                   <CardTitle tag="h5">{appliance.name}</CardTitle>
-                  <CardText><strong>Price:</strong> {appliance.price}</CardText>
+                  <CardText><strong>Price per day:</strong> {formatPrice(appliance.price)}</CardText>
                   <CardText>{appliance.details}</CardText>
                   <CardText className={appliance.available ? "text-success" : "text-danger"}>
                     {appliance.available ? "Available" : "Unavailable"}
                   </CardText>
-                  <Button color="primary" disabled={!appliance.available} onClick={handelBooking}>Rent</Button>
+                  <Button
+                    color="primary"
+                    disabled={!appliance.available}
+                    onClick={() => handleRentClickInternal(appliance)}
+                  >
+                    Rent
+                  </Button>
                 </CardBody>
               </Card>
             </Col>

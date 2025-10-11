@@ -32,7 +32,7 @@ const Admin = () => {
     e.preventDefault();
   
     if (!name || !price || !details) {
-      setDialogMessage("Please fill in all required fields.");
+      setDialogMessage("Please fill in all required fields (Name, Price, and Details are required).");
       setShowDialog(true);
       return;
     }
@@ -45,7 +45,7 @@ const Admin = () => {
       available: available
     };
   
-    axios.post('http://localhost:5000/inserAppliance', applianceData)
+    axios.post('http://localhost:3000/inserAppliance', applianceData)
       .then((response) => {
         const message = response?.data?.message || (response.status === 201 ? "Appliance added successfully!" : "Failed to add appliance.");
         setDialogMessage(message);
@@ -57,6 +57,10 @@ const Admin = () => {
           setDueDate("");
           setDetails("");
           setAvailable(true);
+          
+          // Notify other components that appliances have been updated
+          localStorage.setItem('applianceUpdated', Date.now().toString());
+          window.dispatchEvent(new Event('storage'));
         }
         setShowDialog(true);
       })
@@ -165,7 +169,7 @@ const Admin = () => {
                 </span>
               </div>
               <input
-                type="text"
+                type="number"
                 id="title"
                 className="form-control"
                 placeholder="Enter price .."

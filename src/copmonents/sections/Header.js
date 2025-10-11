@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import {Navbar,NavbarBrand,Nav,NavItem,Dropdown,DropdownToggle,DropdownMenu,DropdownItem,} from 'reactstrap';
+import React, { useState, useEffect, useContext } from 'react';
+import { Navbar, NavbarBrand, Nav, NavItem, Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { DarkModeContext } from './DarkModeContext';
 
 const Header = () => {
   const [userInfo, setUserInfo] = useState({
@@ -30,85 +31,84 @@ const Header = () => {
     fetchUserData();
   }, []);
 
-  const toggleDropdown = () => {
-    setDropdownOpen((prevState) => !prevState);
-  };
+  const toggleDropdown = () => setDropdownOpen(prev => !prev);
 
-  const ToHome = () => {
-    navigate('/home');
-  };
-  const ToContact = () => {
-    navigate('/contact');
-  };
-  const ToFeedback = () => {
-    navigate('/feedback');
-  };
-  const ToHelp = () => {
-    navigate("/help")
-  }
+  const { darkMode, toggleDarkMode } = useContext(DarkModeContext);
 
-  const handleSignOut = () => {
-    localStorage.removeItem('username'); // Clear the username from storage
-    navigate('/');
-  };
 
   return (
-    <Navbar className="navbar-h" expand="lg" fixed="top">
+    <Navbar className={`navbar-h ${darkMode ? 'bg-dark text-light' : 'bg-light text-dark'}`} expand="lg" fixed="top" style={{ padding: '0.5rem 1rem' }}>
       <div className="container d-flex justify-content-between align-items-center">
+        {/* Left side: Profile */}
         <div className="d-flex align-items-center gap-3">
-          <div className="profile-image-container">
+          <div className="profile-image-container" style={{ cursor: 'pointer' }} onClick={() => navigate("/profile")}>
             <img
-              className="profile-image"
-              src={userInfo.imgUrl || 'https://static.vecteezy.com/system/resources/thumbnails/013/360/247/small/default-avatar-photo-icon-social-media-profile-sign-symbol-vector.jpg'}
+              className="profile-image rounded-circle"
+              src={userInfo.imgUrl}
               alt="profile"
-              width="40px"
-              height="40px"
+              width="40"
+              height="40"
+              style={{ objectFit: 'cover' }}
             />
           </div>
-          <NavbarBrand href="#">
-            <h5 className="mb-0" onClick={() => navigate("/profile")}>
+          <NavbarBrand href="#" style={{ cursor: 'pointer' }} onClick={() => navigate("/profile")}>
+            <h5 className="mb-0">
               {userInfo.gender === 'Male' ? 'Mr.' : 'Ms.'} {userInfo.user}
             </h5>
           </NavbarBrand>
         </div>
-        <Nav className="d-flex align-items-center gap-2 text-white" navbar>
+
+        {/* Right side: Navigation */}
+        <Nav className="d-flex align-items-center gap-3" navbar>
           <NavItem>
-            <button className="button-no-color" onClick={ToHome}>
+            <button className="nav-button" onClick={() => navigate('/home')}>
               Home
             </button>
           </NavItem>
           <NavItem>
-            <button className="button-no-color" onClick={ToContact}>
+            <button className="nav-button" onClick={() => navigate('/contact')}>
               Contact us
             </button>
           </NavItem>
           <NavItem>
             <Dropdown isOpen={dropdownOpen} toggle={toggleDropdown}>
-              <DropdownToggle nav caret className="button-no-color">
+              <DropdownToggle nav caret className="nav-button">
                 More
               </DropdownToggle>
               <DropdownMenu>
                 <DropdownItem header>Options</DropdownItem>
-                <DropdownItem
-                  className="bi-pencil-square"
-                  onClick={ToFeedback}
-                > &nbsp;
-                   Feedback and Rating
+                <DropdownItem onClick={() => navigate('/feedback')}>
+                  <i className="bi bi-pencil-square me-2"></i> Feedback and Rating
                 </DropdownItem>
-                <DropdownItem
-                  className="bi bi-question-circle"
-                  onClick={ToHelp}
-                > &nbsp;
-                   Help
+                <DropdownItem onClick={() => navigate('/help')}>
+                  <i className="bi bi-question-circle me-2"></i> Help
                 </DropdownItem>
-                <DropdownItem
-                  className="bi bi-box-arrow-left"
-                  onClick={handleSignOut}
-                > &nbsp;
-                   Sign Out
+                <DropdownItem onClick={() => {
+                  localStorage.removeItem('username');
+                  navigate('/');
+                }}>
+                  <i className="bi bi-box-arrow-left me-2"></i> Sign Out
                 </DropdownItem>
               </DropdownMenu>
             </Dropdown>
+          </NavItem>
+
+          {/* Dark Mode Toggle */}
+          <NavItem className="d-flex gap-2 align-items-center">
+            <button
+              className={`btn btn-sm ${darkMode ? 'btn-outline-light' : 'btn-outline-dark'} rounded-circle`}
+              onClick={toggleDarkMode}
+              title="Light Mode"
+            >
+              ☀️
+            </button>
+            <button
+              className={`btn btn-sm ${darkMode ? 'btn-outline-light' : 'btn-outline-dark'} rounded-circle`}
+              onClick={toggleDarkMode}
+              title="Dark Mode"
+            >
+              🌙
+            </button>
           </NavItem>
         </Nav>
       </div>

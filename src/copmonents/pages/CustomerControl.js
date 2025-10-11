@@ -2,61 +2,226 @@ import React, { useEffect, useState } from 'react';
 import "../css/Admin.css";
 import admin from "../assets/admin.png";
 import axios from "axios";
-import { Modal, ModalHeader, ModalBody, Button } from "reactstrap";
+import { Modal, ModalHeader, ModalBody, Button, Row, Col, Card, CardBody, CardImg, CardTitle, CardText, Spinner, Input, InputGroup, InputGroupText } from "reactstrap";
 import { useNavigate } from 'react-router-dom';
 
 const CustomerControl = () => {
   // Local state for form inputs
+  const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState("");
-  const [name, setName] = useState("");
-  const [price, setprice] = useState("");
-  const [dueDate, setDueDate] = useState("");
-  const [details, setDetails] = useState("");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [gender, setGender] = useState("");
+  const [imgUrl, setImgUrl] = useState("");
   const [showDialog, setShowDialog] = useState(false);
   const [dialogMessage, setDialogMessage] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Fetching user profile and users list from the Redux store
   const Profiler = 'https://static.vecteezy.com/system/resources/thumbnails/013/360/247/small/default-avatar-photo-icon-social-media-profile-sign-symbol-vector.jpg';
   const user = { gender: 'Female', user: 'Admin' };
   const dfimg = 'https://static.vecteezy.com/system/resources/thumbnails/013/360/247/small/default-avatar-photo-icon-social-media-profile-sign-symbol-vector.jpg';
-  const users = [];
+  const users1 = [];
   console.log(user);
   
   const navigate = useNavigate();
-  
-  
-  // Handle appliance submission
-  const handleSubmit = (e) => {
+
+  // Fetch users on component mount
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        console.log('Fetching users from server...');
+        const response = await axios.get('http://localhost:3000/getUsers');
+        console.log('Received users:', response.data);
+        setUsers(response.data || []);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        setDialogMessage('Failed to load users');
+        setShowDialog(true);
+        setLoading(false);
+      }
+    };
+    fetchUsers();
+  }, []);
+
+  // Handle user selection
+  const handleUserSelect = (userId) => {
+    const user = users.find(u => u._id === userId);
+    if (user) {
+      setSelectedUser(userId);
+      setUsername(user.user);
+      setEmail(user.email);
+      setGender(user.gender);
+      setImgUrl(user.imgUrl || "");
+    }
+  };
+
+  // Handle add user
+  const handleAddUser = (e) => {
     e.preventDefault();
   
-    if (!selectedUser || !name || !price || !details) {
-      setDialogMessage("Please fill in all fields.");
+    if (!username || !email || !password || !gender) {
+      setDialogMessage("Please fill in all required fields (Username, Email, Password, Gender).");
       setShowDialog(true);
       return;
     }
   
-    const applianceData = {
-      name: selectedUser,
-      price: price,
-      details: details,
+    const userData = {
+      user: username,
+      email: email,
+      password: password,
+      gender: gender,
+      imgUrl: imgUrl,
+      isAdmin: false
     };
   
-    axios.post('/api/appliances', applianceData)
+    axios.post('http://localhost:3000/addUser', userData)
       .then((response) => {
-        if (response.data.success) {
-          setDialogMessage("Appliance added successfully!");
-          setSelectedUser("");
-          setName("");
-          setDueDate("");
-          setDetails("");
-        } else {
-          setDialogMessage("Failed to add appliance.");
-        }
+        setDialogMessage("User added successfully!");
+        setUsername("");
+        setEmail("");
+        setPassword("");
+        setGender("");
+        setImgUrl("");
         setShowDialog(true);
+        // Refresh users list
+        const fetchUsers = async () => {
+          try {
+            const response = await axios.get('http://localhost:3000/getUsers');
+            setUsers(response.data || []);
+          } catch (error) {
+            console.error('Error fetching users:', error);
+          }
+        };
+        fetchUsers();
       })
       .catch((error) => {
-        console.error("Error adding appliance:", error);
-        setDialogMessage("An error occurred. Please try again later.");
+        console.error("Error adding user:", error);
+        const message = error?.response?.data?.message || "An error occurred. Please try again later.";
+        setDialogMessage(message);
+        setShowDialog(true);
+      });
+  };
+
+  // Delete user by id (direct deletion without confirmation)
+  const confirmDelete = (id) => {
+    if (!id) return;
+    axios.delete(`http://localhost:3000/deleteUser/${id}`)
+      .then((res) => {
+        setUsers((prev) => prev.filter(u => u._id !== id));
+        setDialogMessage(res.data?.message || 'User deleted successfully');
+        setShowDialog(true);
+        // Notify other pages about the deletion
+        try {
+          window.dispatchEvent(new CustomEvent('user:deleted', { detail: { id } }));
+          window.dispatchEvent(new Event('user:refresh'));
+        } catch (_) {}
+      })
+      .catch((error) => {
+        console.error('Error deleting user:', error?.response?.data || error);
+        setDialogMessage(error?.response?.data?.message || 'Failed to delete user');
+        setShowDialog(true);
+      });
+  };
+
+  // Handle delete user (can be called with or without user ID) - keeping for backward compatibility
+  const handleDeleteUser = (userId = null) => {
+    const userToDeleteId = userId || selectedUser;
+    
+    if (!userToDeleteId) {
+      setDialogMessage("Please select a user to delete.");
+      setShowDialog(true);
+      return;
+    }
+
+    // Find the user to get their name for confirmation
+    const userToDelete = users.find(u => u._id === userToDeleteId);
+    const userName = userToDelete ? userToDelete.user : 'Unknown';
+
+    console.log('Deleting user with ID:', userToDeleteId);
+    
+    console.log("Attempting to delete user with ID:", userToDeleteId);
+    console.log("User to delete:", userToDelete);
+    
+    // Confirm deletion
+    if (!window.confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) {
+      console.log("User cancelled deletion");
+      return;
+    }
+    
+    // Simple direct delete call
+    console.log("Making delete request to:", `http://localhost:3000/deleteUser/${userToDeleteId}`);
+    console.log("User ID being deleted:", userToDeleteId);
+    console.log("User object being deleted:", userToDelete);
+    
+    // Test with a simple GET request first to see if server is reachable
+    axios.get('http://localhost:3000/getUsers')
+      .then(() => {
+        console.log("Server is reachable, now attempting delete...");
+        return axios.delete(`http://localhost:3000/deleteUser/${userToDeleteId}`);
+      })
+      .catch((error) => {
+        console.error("Server not reachable:", error);
+        setDialogMessage("Cannot connect to server. Please check if server is running.");
+        setShowDialog(true);
+        return;
+      })
+      .then((response) => {
+        console.log('Delete response:', response);
+        setDialogMessage(`User "${userName}" deleted successfully!`);
+        
+        // Clear form immediately
+        setSelectedUser("");
+        setUsername("");
+        setEmail("");
+        setPassword("");
+        setGender("");
+        setImgUrl("");
+        
+        // Remove user from local state immediately (optimistic update)
+        setUsers(prevUsers => {
+          const updatedUsers = prevUsers.filter(user => user._id !== userToDeleteId);
+          console.log('Removed user from local state. Remaining users:', updatedUsers.length);
+          return updatedUsers;
+        });
+        
+        setShowDialog(true);
+        
+        // Also refresh from server to ensure consistency
+        const fetchUsers = async () => {
+          try {
+            console.log('Refreshing users list from server after deletion...');
+            const response = await axios.get('http://localhost:3000/getUsers');
+            console.log('Updated users list from server:', response.data);
+            setUsers(response.data || []);
+          } catch (error) {
+            console.error('Error fetching users:', error);
+          }
+        };
+        fetchUsers();
+      })
+      .catch((error) => {
+        console.error("Error deleting user:", error);
+        console.error("Error response:", error.response?.data);
+        console.error("Error status:", error.response?.status);
+        console.error("Error message:", error.message);
+        
+        let errorMessage = "An error occurred. Please try again later.";
+        
+        if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.response?.status === 404) {
+          errorMessage = "User not found. It may have been already deleted.";
+        } else if (error.response?.status === 500) {
+          errorMessage = "Server error. Please check if the server is running.";
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
+        setDialogMessage(`Error deleting user: ${errorMessage}`);
         setShowDialog(true);
       });
   };
@@ -107,85 +272,53 @@ const CustomerControl = () => {
       &nbsp;
       &nbsp;
       <div className="container-admin">
-        <div className="left-section-admin">
+        <div className="left-section-admin" style={{ width: '100%' }}>
           <h2>Customer Control</h2>
-            <div className="input-group">
-              
-            </div>
-
-            <label className="label">Name :</label>
-            <div className="input-group">
-              <div className="input-group-prepend">
-                <span className="input-group-text">
-                  <i className="bi bi-sticky-fill"></i>
-                </span>
-              </div>
-              <input
-                type="text"
-                id="title"
-                className="form-control"
-                placeholder="Enter Name .."
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
-            <label className="label">imgUrl :</label>
-            <div className="input-group">
-              <div className="input-group-prepend">
-                <span className="input-group-text">
-                  <i className="bi bi-sticky-fill"></i>
-                </span>
-              </div>
-              <input
-                type="text"
-                id="title"
-                className="form-control"
-                placeholder="Enter imgUrl .."
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
-
-            <label className="label">Price :</label>
-            <div className="input-group">
-              <div className="input-group-prepend">
-                <span className="input-group-text">
-                  <i className="bi bi-sticky-fill"></i>
-                </span>
-              </div>
-              <input
-                type="text"
-                id="title"
-                className="form-control"
-                placeholder="Enter price .."
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
-
-            <label className="label">details :</label>
-            <div className="input-group">
-              <div className="input-group-prepend">
-                <span className="input-group-text">
-                  <i className="bi bi-pencil-fill"></i>
-                </span>
-              </div>
-              <textarea
-                id="task"
-                className="form-control"
-                placeholder="Enter the details .."
-                rows="4"
-                value={details}
-                onChange={(e) => setDetails(e.target.value)}
-              ></textarea>
-            </div>
-
-            <button onClick={handleSubmit} className="login-btn-admin">Submit</button>
+          <InputGroup className="mb-3">
+            <Input type="text" placeholder="Search by name or email..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            <InputGroupText className="bi bi-search" />
+          </InputGroup>
+          {loading ? (
+            <div className="text-center my-4"><Spinner color="primary" /></div>
+          ) : (
+            <Row xs="1" sm="2" md="3" lg="4">
+              {users
+                .filter(u => 
+                  u.user?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  u.email?.toLowerCase().includes(searchTerm.toLowerCase())
+                )
+                .map((user) => (
+                <Col key={user._id} className="mb-4">
+                  <Card className="shadow-sm h-100">
+                    {user.imgUrl ? (
+                      <CardImg top src={user.imgUrl} alt={user.user} style={{ height: '160px', objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ height: '160px', backgroundColor: '#f8f9fa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <i className="bi bi-person-circle" style={{ fontSize: '4rem', color: '#6c757d' }}></i>
+                      </div>
+                    )}
+                    <CardBody>
+                      <CardTitle tag="h5">{user.user}</CardTitle>
+                      <CardText><strong>Email:</strong> {user.email}</CardText>
+                      <CardText><strong>Gender:</strong> {user.gender}</CardText>
+                      <CardText><strong>Role:</strong> {user.isAdmin ? 'Admin' : 'User'}</CardText>
+                      <div className="d-flex gap-2">
+                        <Button color="danger" size="sm" onClick={() => confirmDelete(user._id)} className="bi bi-trash">&nbsp; Delete</Button>
+                      </div>
+                    </CardBody>
+                  </Card>
+                </Col>
+              ))}
+              {users.filter(u => 
+                u.user?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                u.email?.toLowerCase().includes(searchTerm.toLowerCase())
+              ).length === 0 && (
+                <Col><p className="text-center">No users found.</p></Col>
+              )}
+            </Row>
+            )}
         </div>
 
-        <div className="right-section-admin">
-          <img src={admin} alt="Signup Illustration" />
-        </div>
       </div>
       <Modal isOpen={showDialog} toggle={() => setShowDialog(false)}>
         <ModalHeader toggle={() => setShowDialog(false)}>Message</ModalHeader>

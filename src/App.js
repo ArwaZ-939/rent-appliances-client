@@ -13,16 +13,25 @@ import Help from './copmonents/pages/Help';
 import Password from './copmonents/pages/Password.js';
 import ResetPassword from './copmonents/pages/ResetPassword.js';
 import Profiler from './copmonents/pages/Profile.js';
-import DarkMode from './copmonents/sections/DarkMode.js';
 import Otp from './copmonents/pages/Otp.js';
 import DeleteAppliances from './copmonents/pages/DeleteAppliances.js';
 import CustomerControl from './copmonents/pages/CustomerControl.js';
 import UpdateAppliances from './copmonents/pages/UpdateAppliances.js';
+import { DarkModeContext, DarkModeProvider } from './copmonents/sections/DarkModeContext.js';
+import './App.css'
+
+
+
+
+
 
 
 function App() {
   
   return (
+    <div> 
+
+  <DarkModeProvider>
   <BrowserRouter>
   <Routes>
     <Route path='/'           element={<Login/>}/>
@@ -40,7 +49,6 @@ function App() {
     <Route path='/reset-password' element={<ResetPassword/>}/>
     <Route path='/profile' element={<Profiler/>}/>
     <Route path='/otp' element={<Otp/>}/>
-    <Route path='/dark-mode' element={<DarkMode/>}/>
     <Route path='/delete-appliances' element={<DeleteAppliances/>}/>
     <Route path='/update-appliances' element={<UpdateAppliances/>}/>
     <Route path='/customer-control' element={<CustomerControl/>}/>
@@ -48,11 +56,16 @@ function App() {
 
 
 
-
+    
+    
 
 
   </Routes>
+  
   </BrowserRouter>
+  </DarkModeProvider>
+
+  </div>
   );
 }
 

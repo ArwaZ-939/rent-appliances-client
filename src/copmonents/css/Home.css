@@ -8,6 +8,23 @@
     font-style: #7B4F2C;
     
 }
+.navbar-h .nav-button {
+  background: none;
+  border: none;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.375rem 0.75rem;
+  transition: color 0.3s ease;
+  font-family: inherit;
+  text-decoration: none;
+}
+
+.navbar-h .nav-button:hover {
+  color: #d4b67a; 
+}
+
 .brown-text{
   color: #7B4F2C;
 }
@@ -195,36 +212,59 @@ span{
     border-color: #7B4F2C;
   }
 
-      
-  .navbar-h {
-    background-color: #7B4F2C; /* Optional: Set a background color for contrast */
+
+
+.navbar-h {
+    background-color: #7B4F2C !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    padding: 0.75rem 1.5rem;
+    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
 }
 
 .navbar-h .nav-link,
 .navbar-h .navbar-brand {
-    color: white !important; /* Set text color to white */
+    color: white !important;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+
+
+.navbar-h .nav-link:hover,
+.navbar-h .navbar-brand:hover {
+    color: #d4b67a; 
 }
 
 .navbar-h .dropdown-item {
-    color: black; /* Optional: Change dropdown item color if needed */
+    color: #333;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .navbar-h .dropdown-item:hover {
-    background-color: #555; /* Optional: Change background color on hover */
-    color: white; /* Change text color on hover */
+    background-color: #5a3a1a;
+    color: white;
 }
 
-  
+
 .profile-image-container {
-  border: 3px solid #ffffff; /* Always visible blue border */
-  border-radius: 50%; /* Circular design */
-  padding: 5px;
-  box-shadow: 0 0 10px #ffffff; /* Subtle glow effect */
-  transition: all 0.3s ease-in-out;
-  cursor: pointer; /* Indicates interactiveness */
+    border: 3px solid #ffffff;
+    border-radius: 50%;
+    padding: 3px;
+    box-shadow: 0 0 10px #ffffff;
+    transition: all 0.3s ease-in-out;
+    cursor: pointer;
+}
+
+.profile-image-container:hover {
+    box-shadow: 0 0 15px #a97452;
+    border-color: #a97452;
 }
 
 .profile-image {
-  border-radius: 50%; /* Ensures the image remains circular */
-  display: block;
+    border-radius: 50%;
+    display: block;
+    object-fit: cover;
+    width: 40px;
+    height: 40px;
 }

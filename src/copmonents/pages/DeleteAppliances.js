@@ -178,9 +178,6 @@ const DeleteAppliances = () => {
           )}
         </div>
 
-        <div className="right-section-admin">
-          <img src={admin} alt="Signup Illustration" />
-        </div>
       </div>
       <Modal isOpen={showDialog} toggle={() => setShowDialog(false)}>
         <ModalHeader toggle={() => setShowDialog(false)}>Message</ModalHeader>
