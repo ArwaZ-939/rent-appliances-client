@@ -7,7 +7,6 @@ const ValidationRegisterSchema = Yup.object().shape({
     password: Yup.string().min(8, "Password must be at least 8 characters !!").matches(/[!@#$%^&*(),.?":{}|<>]/,"Password must contain at least one special character !!").required("Password is required !!"),
     conPassword:Yup.string().oneOf([Yup.ref("password")],'Password must be match !!').required("Password is required !!"),
     checkbox:Yup.bool().oneOf([true],"You must agree all the terms"),
-    policyAgreement: Yup.bool().oneOf([true], "You must agree to the Return Policy to register"),
     gender: Yup.string().required("Gender is required !!")
 })
 

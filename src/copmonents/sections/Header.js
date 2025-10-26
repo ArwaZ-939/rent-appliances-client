@@ -4,6 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { DarkModeContext } from './DarkModeContext';
 
+
+
+
+
 const Header = () => {
   const [userInfo, setUserInfo] = useState({
     imgUrl: 'https://static.vecteezy.com/system/resources/thumbnails/013/360/247/small/default-avatar-photo-icon-social-media-profile-sign-symbol-vector.jpg',
@@ -114,6 +118,11 @@ const Header = () => {
       </div>
     </Navbar>
   );
-};
+}
+
+
+;
 
 export default Header;
+
+

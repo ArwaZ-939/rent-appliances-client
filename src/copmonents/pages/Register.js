@@ -20,7 +20,6 @@ const Register = () => {
   const [gender, setGender] = useState("");
   const [message, setMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const [showPolicyModal, setShowPolicyModal] = useState(false);
 
   const navigate = useNavigate();
 
@@ -221,28 +220,7 @@ const Register = () => {
             </button>
           </div>
         </div>
-        
-        {/* Return Policy Section */}
-        <div className="policy-section">
-          <div className="policy-agreement">
-            <label className="policy-checkbox">
-              <input
-                type="checkbox"
-                {...register("policyAgreement")}
-              />
-              <span className="checkmark"></span>
-              I agree to the <button 
-                type="button" 
-                className="policy-link" 
-                onClick={() => setShowPolicyModal(true)}
-              >
-                Return Policy
-              </button>
-            </label>
-            <span className="error small">{errors.policyAgreement?.message}</span>
-          </div>
-        </div>
-        
+        <br />
         <br />
         <button type="button" className="cssbuttons-io-button" color="#7B4F2C" onClick={submitForm(handleSubmit)}>
           Register
@@ -263,51 +241,6 @@ const Register = () => {
       <div className="right-section">
         <img src={register1} alt="Signup Illustration" />
       </div>
-      
-      {/* Return Policy Modal */}
-      {showPolicyModal && (
-        <div className="policy-modal-overlay">
-          <div className="policy-modal">
-            <div className="policy-modal-header">
-              <h3>Return Policy</h3>
-              <button 
-                className="close-btn" 
-                onClick={() => setShowPolicyModal(false)}
-              >
-                ×
-              </button>
-            </div>
-            <div className="policy-modal-body">
-              <h5>1. Return Window:</h5>
-              <p>Rented appliances can be returned within 3 hours of delivery if they are defective, damaged, or not as described.</p>
-              
-              <h5>2. Condition of Return</h5>
-              <p>The appliance must be returned in the same condition it was delivered — clean, undamaged, and with all accessories included.</p>
-              
-              <h5>3. Return Process:</h5>
-              <p><strong>Contact our support team at "RentingHA3@gmail.com" or call us at "98939395".</strong> A pickup will be scheduled within 3 business hours.</p>
-              <ul>
-                <li>The device will be inspected and approved.</li>
-                <li>If the customer wants to return the device before the expiry of the period, an amount will be returned (to be agreed upon by the customer and the renter).</li>
-              </ul>
-              
-              <h5>4. Late Return Penalty:</h5>
-              <p>Returns made after the agreed rental period may incur additional charges unless an extension was pre-approved.</p>
-              
-              <h5>5. The admin can block the user if he violates these policies twice.</h5>
-              <p>When you click on "Submit", this indicates that you agree to these policies.</p>
-            </div>
-            <div className="policy-modal-footer">
-              <button 
-                className="policy-close-btn" 
-                onClick={() => setShowPolicyModal(false)}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
       
     </form>
   );
