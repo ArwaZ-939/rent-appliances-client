@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import "../css/Login.css";
 import loginLogo from "../assets/login.png";
 import { useNavigate } from "react-router-dom";
@@ -6,6 +6,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { useForm } from "react-hook-form";
 import ValidationLogin from "../../validations/LoginValidation";
 import axios from "axios";
+import { DarkModeContext } from '../sections/DarkModeContext';
 
 const Login = () => {
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -13,6 +14,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [faild, setFaild] = useState("");
   const [loading, setLoading] = useState(false);
+  const { darkMode } = useContext(DarkModeContext);
 
   const togglePasswordVisibility = () => {
     setPasswordVisible(!passwordVisible);
@@ -25,7 +27,7 @@ const Login = () => {
     console.log("Attempting login with:", user1.user);
     setLoading(true);
     try {
-      const response = await axios.post("http://localhost:3000/getUser", user1);
+      const response = await axios.post("http://localhost:5000/getUser", user1);
       console.log("Login successful:", response.data);
       setLoading(false);
       if (response.data.user && response.data.user.isAdmin) {
@@ -58,7 +60,7 @@ const Login = () => {
 
   return (
     <>
-      <form className="container-login">
+      <form className={`container-login ${darkMode ? 'bg-dark text-light' : 'bg-light text-dark'}`}>
         <div className="left-section-login ">
           <img src={loginLogo} alt="Signup Illustration" />
         </div>
@@ -78,7 +80,7 @@ const Login = () => {
             <input
               type="text"
               id="name"
-              className="form-control"
+              className={`form-control ${darkMode ? 'bg-dark text-light border-secondary' : ''}`}
               placeholder="Username"
               {...register("username", {
                 value: user,
@@ -100,7 +102,7 @@ const Login = () => {
             <input
               type={passwordVisible ? "text" : "password"}
               id="password"
-              className="form-control"
+              className={`form-control ${darkMode ? 'bg-dark text-light border-secondary' : ''}`}
               placeholder="Password"
               {...register("password", {
                 value: password,
@@ -123,7 +125,7 @@ const Login = () => {
             </div>
           </div>
           <button
-            className="cssbuttons-io-button"
+            className={`cssbuttons-io-button ${darkMode ? 'dark-mode-button' : ''}`}
             onClick={submitForm(handleSubmit)}
           >
             Login
@@ -144,9 +146,9 @@ const Login = () => {
           </button>
           <span className="error small">{faild}</span>
           <div className="create-account">
-          <button className="tag-button right" onClick={handelForgot}>Forgot password?</button>
+          <button className={`tag-button right ${darkMode ? 'text-light' : 'text-dark'}`} onClick={handelForgot}>Forgot password?</button>
           <br/>
-            <button className="tag-button" onClick={()=>navigate('/register')}>Create an account?</button>
+            <button className={`tag-button ${darkMode ? 'text-light' : 'text-dark'}`} onClick={()=>navigate('/register')}>Create an account?</button>
           </div>
         </div>
       </form>

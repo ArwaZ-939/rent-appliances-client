@@ -18,7 +18,8 @@ import DeleteAppliances from './copmonents/pages/DeleteAppliances.js';
 import CustomerControl from './copmonents/pages/CustomerControl.js';
 import UpdateAppliances from './copmonents/pages/UpdateAppliances.js';
 import { DarkModeContext, DarkModeProvider } from './copmonents/sections/DarkModeContext.js';
-import './App.css'
+import './App.css';
+import './copmonents/css/DarkMode.css';
 
 
 

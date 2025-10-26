@@ -4,7 +4,8 @@ import rental from '../assets/rental.avif'; // Image used on the booking page
 import Footer from '../sections/Footer'; // Footer component
 import Header from '../sections/Header'; // Header component
 import { useNavigate, useLocation } from 'react-router-dom'; // Hooks for navigation and accessing passed state
-import { useState, useEffect } from 'react'; // React hooks for managing state and side effects
+import { useState, useEffect, useContext } from 'react'; // React hooks for managing state and side effects
+import { DarkModeContext } from '../sections/DarkModeContext';
 
 // Main RentalBooking component for handling appliance rental reservations
 const RentalBooking = () => {
@@ -13,6 +14,7 @@ const RentalBooking = () => {
   
   // Location hook to access state passed from previous route (ProductDetails page)
   const location = useLocation(); // Used to access the state passed from the previous route
+  const { darkMode } = useContext(DarkModeContext);
 
   // State management for rental booking form
   // States to manage rental duration, pricing, and selected appliance
@@ -74,7 +76,7 @@ const RentalBooking = () => {
   return (
     <>
       {/* Main container for the rental booking page */}
-      <div className="main-contact">
+      <div className={`main-contact ${darkMode ? 'bg-dark text-light' : 'bg-light text-dark'}`}>
         <Header /> {/* Top navigation/header component */}
 
         {/* Main content container with responsive layout */}
@@ -183,7 +185,7 @@ const RentalBooking = () => {
                     <input
                       type="number" // Numeric input type
                       name="days" // Form field name
-                      className="form-control" // Bootstrap form control class
+                      className={`form-control ${darkMode ? 'bg-dark text-light border-secondary' : ''}`}
                       id="days" // Input ID for label association
                       placeholder="Number of days to rent" // Placeholder text
                       value={days} // Controlled component value
@@ -201,7 +203,7 @@ const RentalBooking = () => {
                   <input
                     type="text" // Text input type
                     name="place" // Form field name
-                    className="form-control" // Bootstrap form control class
+                    className={`form-control ${darkMode ? 'bg-dark text-light border-secondary' : ''}`}
                     id="place" // Input ID for label association
                     placeholder="Place of delivery" // Placeholder text
                     required // HTML5 required attribute
@@ -215,7 +217,7 @@ const RentalBooking = () => {
                   <input
                     type="number" maxLength={8}// Telephone input type for better mobile experience
                     name="phone" // Form field name
-                    className="form-control" // Bootstrap form control class
+                    className={`form-control ${darkMode ? 'bg-dark text-light border-secondary' : ''}`}
                     id="phone" // Input ID for label association
                     placeholder="Phone Number" // Placeholder text
                     required // HTML5 required attribute
@@ -228,7 +230,7 @@ const RentalBooking = () => {
                   <label htmlFor="message">Comments</label>
                   <textarea
                     name="message" // Form field name
-                    className="form-control" // Bootstrap form control class
+                    className={`form-control ${darkMode ? 'bg-dark text-light border-secondary' : ''}`}
                     id="message" // Textarea ID for label association
                     rows="4" // Visible rows count
                     placeholder="Your Comments" // Placeholder text
@@ -258,7 +260,7 @@ const RentalBooking = () => {
                 {/* Submit button */}
                 <button 
                   type="submit" // Button type for form submission
-                  className="btn btn-submit" // CSS classes for styling
+                  className={`btn btn-submit ${darkMode ? 'btn-outline-light' : 'btn-primary'}`}
                   disabled={!agreedToTerms} // Disable button until terms are agreed
                   style={{
                     opacity: agreedToTerms ? 1 : 0.6, // Visual feedback for disabled state

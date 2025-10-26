@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import axios from 'axios';
 import {
   Card,
@@ -15,6 +15,7 @@ import {
   InputGroupText
 } from 'reactstrap';
 import { useLocation } from 'react-router-dom';
+import { DarkModeContext } from './DarkModeContext';
 
 const ApplianceCards = ({ onRentClick }) => {
   const [appliances, setAppliances] = useState([]);
@@ -22,10 +23,11 @@ const ApplianceCards = ({ onRentClick }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const location = useLocation();
+  const { darkMode } = useContext(DarkModeContext);
 
   const fetchAppliances = async () => {
     try {
-      const response = await axios.get('http://localhost:3000/getSpecificAppliance');
+      const response = await axios.get('http://localhost:5000/getSpecificAppliance');
       setAppliances(response.data.Appliance || []);
     } catch (error) {
       console.error('Error fetching appliances:', error);
@@ -99,6 +101,7 @@ const ApplianceCards = ({ onRentClick }) => {
             placeholder="Search appliances..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
+            className={darkMode ? 'bg-dark text-light border-secondary' : ''}
           />
           <InputGroupText style={{ color: 'gray', cursor: 'pointer' }}>🔍</InputGroupText>
         </InputGroup>
@@ -111,8 +114,8 @@ const ApplianceCards = ({ onRentClick }) => {
             left: 0,
             right: 0,
             zIndex: 1000,
-            background: '#fff',
-            border: '1px solid #ccc',
+            background: darkMode ? '#343a40' : '#fff',
+            border: darkMode ? '1px solid #6c757d' : '1px solid #ccc',
             listStyle: 'none',
             padding: 0,
             margin: 0,
@@ -127,11 +130,12 @@ const ApplianceCards = ({ onRentClick }) => {
                 style={{
                   padding: '10px',
                   cursor: 'pointer',
-                  borderBottom: '1px solid #eee',
-                  fontSize: '14px'
+                  borderBottom: darkMode ? '1px solid #6c757d' : '1px solid #eee',
+                  fontSize: '14px',
+                  color: darkMode ? '#ffffff' : '#000000'
                 }}
-                onMouseEnter={e => e.currentTarget.style.background = '#f5f5f5'}
-                onMouseLeave={e => e.currentTarget.style.background = '#fff'}
+                onMouseEnter={e => e.currentTarget.style.background = darkMode ? '#495057' : '#f5f5f5'}
+                onMouseLeave={e => e.currentTarget.style.background = darkMode ? '#343a40' : '#fff'}
               >
                 {item}
               </li>
@@ -153,7 +157,7 @@ const ApplianceCards = ({ onRentClick }) => {
           filteredAppliances.map((appliance) => (
             <Col key={appliance._id} className="d-flex">
               <Card
-                className="shadow-sm w-100 border-0"
+                className={`shadow-sm w-100 border-0 ${darkMode ? 'bg-dark text-light' : 'bg-light text-dark'}`}
                 style={{
                   transition: 'transform 0.2s ease, box-shadow 0.2s ease',
                   borderRadius: '12px',
@@ -179,10 +183,10 @@ const ApplianceCards = ({ onRentClick }) => {
                 )}
                 <CardBody className="d-flex flex-column justify-content-between">
                   <div>
-                    <CardTitle tag="h5" className="mb-2 text-primary">
+                    <CardTitle tag="h5" className={`mb-2 ${darkMode ? 'text-light' : 'text-primary'}`}>
                       {appliance.name}
                     </CardTitle>
-                    <CardText className="text-muted mb-2">
+                    <CardText className={`mb-2 ${darkMode ? 'text-light' : 'text-muted'}`}>
                       <strong>Price per day:</strong> {formatPrice(appliance.price)}
                     </CardText>
                     <CardText style={{ fontSize: '14px' }}>{appliance.details}</CardText>
@@ -192,7 +196,7 @@ const ApplianceCards = ({ onRentClick }) => {
                       {appliance.available ? 'Available' : 'Unavailable'}
                     </CardText>
                     <Button
-                      color="primary"
+                      color={darkMode ? "outline-light" : "primary"}
                       className="w-100 mt-2"
                       disabled={!appliance.available}
                       onClick={() => handleRentClickInternal(appliance)}
@@ -206,7 +210,7 @@ const ApplianceCards = ({ onRentClick }) => {
           ))
         ) : (
           <Col>
-            <p className="text-center text-muted mt-4">No appliances found.</p>
+            <p className={`text-center mt-4 ${darkMode ? 'text-light' : 'text-muted'}`}>No appliances found.</p>
           </Col>
         )}
       </Row>
