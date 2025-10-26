@@ -91,6 +91,167 @@ h2 {
     margin-top: 15px;
     text-align: center;
 }
+
+/* Policy Section Styles */
+.policy-section {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.policy-agreement {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.policy-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #333;
+}
+
+.policy-checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.policy-link {
+    background: none;
+    border: none;
+    color: #7B4F2C;
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0;
+    margin: 0 4px;
+}
+
+.policy-link:hover {
+    color: #aa9937;
+}
+
+/* Policy Modal Styles */
+.policy-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.policy-modal {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.policy-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #e9ecef;
+    background-color: #7B4F2C;
+    color: white;
+    border-radius: 10px 10px 0 0;
+}
+
+.policy-modal-header h3 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 28px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.3s ease;
+}
+
+.close-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.policy-modal-body {
+    padding: 20px;
+    line-height: 1.6;
+}
+
+.policy-modal-body h5 {
+    color: #7B4F2C;
+    font-weight: bold;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.policy-modal-body h5:first-child {
+    margin-top: 0;
+}
+
+.policy-modal-body p {
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.policy-modal-body ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.policy-modal-body li {
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.policy-modal-footer {
+    padding: 20px;
+    border-top: 1px solid #e9ecef;
+    text-align: center;
+    background-color: #f8f9fa;
+    border-radius: 0 0 10px 10px;
+}
+
+.policy-close-btn {
+    background-color: #7B4F2C;
+    color: white;
+    border: none;
+    padding: 10px 30px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.policy-close-btn:hover {
+    background-color: #aa9937;
+}
 .create-account a {
     color: #3a6eff;
     text-decoration: underline;
