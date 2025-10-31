@@ -7,14 +7,10 @@
     "@hookform/resolvers": "^3.9.1",
     "@mui/icons-material": "^6.1.4",
     "@reduxjs/toolkit": "^2.3.0",
-    "@testing-library/jest-dom": "^5.17.0",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^13.5.0",
     "axios": "^1.7.7",
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",
     "install": "^0.13.0",
-    "jest": "^27.5.1",
     "jquery": "^3.7.1",
     "react": "^18.3.1",
     "react-bootstrap": "^2.10.5",
@@ -55,7 +51,12 @@
   },
   "devDependencies": {
     "@babel/preset-env": "^7.26.0",
-    "babel-jest": "^29.7.0"
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "babel-jest": "^29.7.0",
+    "jest": "^27.5.1"
   },
   "proxy": "http://localhost:5000"
+
 }

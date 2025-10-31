@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import "../css/Admin.css";
 import admin from "../assets/admin.png";
-import axios from "axios";
+import axios from 'axios';
 import { Modal, ModalHeader, ModalBody, Button } from "reactstrap";
 import { useNavigate } from 'react-router-dom';
 
