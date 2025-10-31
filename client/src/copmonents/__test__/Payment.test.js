@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent, act } from "@testing-library/react";
-
+arwa
 // Mock non-JS imports and layout components used by Payment
 jest.mock("../pages/../css/Payment.css", () => ({}));
 jest.mock("../pages/../sections/Footer", () => () => <div data-testid="footer">Footer</div>);
