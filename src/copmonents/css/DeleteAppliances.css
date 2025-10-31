@@ -1,0 +1,160 @@
+body {
+    font-family: 'Poppins', sans-serif;
+  }
+  
+  .admin-panel {
+    display: flex;
+  }
+
+  .sidebar {
+    width: 240px;
+    background-color:#252e31b9;
+    color: white;
+    padding: 20px;
+    height: 100vh; /* Full viewport height */
+    position: fixed; /* Keeps the sidebar fixed while scrolling */
+    border-right: 2px solid white; /* Adds a vertical white line on the right */
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); /* Optional: Subtle shadow for a modern look */
+  }
+  
+  
+
+  .staff-info {
+  border: 1px solid #ddd;
+  padding: 15px;
+  background-color: #f9f9f9;
+  font-size: 12px;
+  font-family:'Times New Roman', Times, serif;
+  
+  }
+
+  .sidebar .profile img {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .user-role {
+    color: #9CA3AF;
+    margin-top: 10px;
+  }
+  
+  .menu {
+    padding: 0;
+    list-style: none;
+  }
+  
+  .menu-item {
+    margin: 20px 0;
+    color: #E5E7EB;
+    cursor: pointer;
+  }
+  
+  .menu-item:hover {
+    color: #ffffff;
+  }
+  
+  .submenu {
+    list-style: none;
+    margin-left: 20px;
+  }
+  
+  .main-content {
+    margin-left: 240px;
+    flex-grow: 1;
+    padding: 30px;
+    background-color: #F3F4F6;
+    height: 100vh; /* Full viewport height */
+  }
+  
+  .navbar-custom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .actions {
+    display: flex;
+    gap: 15px;
+  }
+  
+  .page-link{
+    background-color: #2c5f6e;
+    color: #ddd;
+  }
+
+  .form-control {
+    padding: 8px;
+    margin-right: 5px;
+  }
+  
+  .staff-table .btn {
+    margin-right: 5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  
+  .btn-edit {
+    background-color: #2c5f6ec9;
+    color: #ffffff;
+    border: none;
+    padding: 6px 10px;
+    cursor: pointer;
+    border-radius: 15%;
+  }
+  
+  .btn-delete {
+    background-color: #2c5f6ec9;
+    color: rgb(255, 255, 255);
+    border: none;
+    padding: 6px 10px;
+    cursor: pointer;
+    border-radius: 15%;
+  }
+.btn.disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+  opacity: 0.65;
+}
+
+.btn-warning {
+  font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+  background-color: #b68e09;
+  border-color: #b68b09;
+  width: 100px;
+}
+
+.btn-success {
+  font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+  background-color: #28a745;
+  border-color: #28a745;
+  width: 100px;
+
+}
+.warning {
+  width: 100px;
+
+  cursor: pointer;
+  position: relative;
+  font-size: 13px;
+  color: #b68b09;
+  border: 2px solid #b68b09;
+  border-radius: 34px;
+  background-color: transparent;
+  font-weight: 600;
+}
+.success {
+  width: 100px;
+  cursor: pointer;
+  position: relative;
+  font-size: 13px;
+  color: #09b62e;
+  border: 2px solid #09b62e;
+  border-radius: 34px;
+  background-color: transparent;
+  font-weight: 600;
+}
+
+
+
+  

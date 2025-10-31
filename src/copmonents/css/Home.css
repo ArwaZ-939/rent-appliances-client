@@ -1,0 +1,331 @@
+/* ===============================
+   🌟 Layout & Containers
+================================= */
+.container1 {
+  background-image: url('../assets/Home.jpeg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  min-height: 100vh;
+  font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+  color: #7B4F2C;
+}
+
+/* ===============================
+   🌟 Navbar Styling
+================================= */
+.navbar-h {
+  background-color: #915609b7 !important; /* اللون الجديد */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  padding: 0.75rem 1.5rem;
+  font-family: inherit;
+}
+
+.navbar-h .nav-link,
+.navbar-h .navbar-brand {
+  color: white !important;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.navbar-h .nav-link:hover,
+.navbar-h .navbar-brand:hover {
+  color: #d4b67a;
+}
+
+.navbar-h .nav-button {
+  background: none;
+  border: none;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.375rem 0.75rem;
+  transition: color 0.3s ease;
+  text-decoration: none;
+}
+
+.navbar-h .nav-button:hover {
+  color: #d4b67a;
+}
+
+.navbar-h .dropdown-item {
+  color: #333;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.navbar-h .dropdown-item:hover {
+  background-color: #5a3a1a;
+  color: white;
+}
+
+/* ===============================
+   🌟 Header Section
+================================= */
+.header {
+  background-color: #915609b7 ;
+  padding: 20px 0;
+  text-align: center;
+}
+
+.header h1 {
+  padding-top: 70px;
+  padding-bottom: 20px;
+  font-size: 3rem;
+  font-weight: 700;
+  color: #2c5f6e;
+}
+
+.header p {
+  margin: 20px 0;
+  font-size: 1.2rem;
+  color: #ffffff;
+}
+
+/* ===============================
+   🌟 Services Section
+================================= */
+.services {
+  margin-bottom: 100px;
+}
+
+.services h1 {
+  font-weight: 700;
+  color: #ffffff;
+}
+
+
+.darkMode  {
+  background-color: #121212;
+  color: #ffffff;
+}
+
+.darkMode .navbar-h {
+  background-color: #1f1f1f !important;
+  color: #f5f5f5;
+}
+
+.darkMode .nav-button {
+  color: #f5f5f5;
+}
+
+.darkMode .nav-button:hover {
+  color: #d4b67a;
+}
+
+.darkMode .card {
+  background-color: #1e1e1e;
+  color: #f5f5f5;
+}
+
+
+
+.services .card {
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 10px 10px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s, box-shadow 0.3s;
+  min-height: 300px;
+}
+
+.services .card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.services .card-body {
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.services .card h5 {
+  font-size: 22px;
+  font-weight: bold;
+  color: #333;
+}
+
+.services .card p {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 15px;
+}
+
+.services .card .date {
+  font-size: 14px;
+  color: #888;
+}
+
+.services .btn {
+  border-radius: 5px;
+  padding: 10px 25px;
+  font-size: 14px;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.services .btn:hover {
+  background-color: #333;
+  color: #fff;
+}
+
+/* ===============================
+   🌟 Modern Card Styling
+================================= */
+.modern-card {
+  border: none;
+  border-radius: 10px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+}
+
+.modern-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+}
+
+.card-name-modern {
+  background-color:#915609b7 ;
+  color: white;
+  font-size: 1.25rem;
+  font-weight: bold;
+  padding: 10px;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  text-align: center;
+}
+
+.card-text-modern {
+  font-size: 1rem;
+  color: #555;
+  margin-top: 15px;
+}
+
+.date-modern {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 10px;
+}
+
+.date-modern span {
+  font-weight: 600;
+}
+
+.btn-modern {
+  border-radius: 20px;
+  padding: 10px 20px;
+  font-weight: 600;
+  text-transform: uppercase;
+  transition: background-color 0.3s ease;
+}
+
+.btn-modern:hover {
+  background-color:#915609b7 ;
+  color: white;
+}
+
+/* ===============================
+   🌟 Pagination
+================================= */
+.pagination {
+  margin-top: 20px;
+}
+
+.pagination button {
+  background-color: #915609b7 ;
+  color: white;
+  border-color: #915609b7 ;
+  font-size: 1rem;
+  padding: 8px 12px;
+  border-radius: 5px;
+}
+
+.pagination button:hover {
+  background-color: #5a3a1a;
+  border-color: #5a3a1a;
+}
+
+.pagination .active {
+  background-color: #ffffff;
+  color: #333;
+  border-color:#915609b7 ;
+}
+
+/* ===============================
+   🌟 Miscellaneous
+================================= */
+.carousel-image {
+  padding-top: 80px;
+  display: block;
+  width: 100%;
+  max-height: 500px;
+  object-fit: cover;
+  margin: 0;
+}
+
+.sidebar {
+  font-family: inherit;
+}
+
+.content-row {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  padding: 20px;
+}
+
+.column1,
+.column2 {
+  flex: 1;
+  padding: 20px;
+  margin: 10px;
+}
+
+.btn-custom {
+  font-weight: bold;
+  padding: 10px 20px;
+}
+
+.card {
+  margin-bottom: 30px;
+}
+
+span {
+  font-weight: bold;
+}
+
+.brown-text {
+  color:#915609b7 ;
+}
+
+.icon-wrapper {
+  font-size: 40px;
+  color: #5ea2ef;
+  margin-bottom: 15px;
+}
+
+/* ===============================
+   🌟 Profile Image
+================================= */
+.profile-image-container {
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+  padding: 3px;
+  box-shadow: 0 0 10px #ffffff;
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
+}
+
+.profile-image-container:hover {
+  box-shadow: 0 0 15px #a97452;
+  border-color: #a97452;
+}
+
+.profile-image {
+  border-radius: 50%;
+  display: block;
+  object-fit: cover;
+  width: 40px;
+  height: 40px;
+}
