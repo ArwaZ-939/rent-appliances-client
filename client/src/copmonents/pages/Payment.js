@@ -8,6 +8,7 @@ import Header from '../sections/Header';
 // Import React Router hooks for navigation and accessing route state
 import { useNavigate, useLocation } from 'react-router-dom';
 
+
 // Main Payment component for handling payment information and processing
 const Payment = () => {
   // Navigation hook to programmatically navigate to different routes
@@ -15,14 +16,17 @@ const Payment = () => {
   // Location hook to access state passed from previous route (RentalBooking page)
   const location = useLocation();
 
+
   // Refs for animation triggers - used to track DOM elements for scroll animations
   const orderSummaryRef = useRef(null); // Reference for order summary section
   const paymentSectionRef = useRef(null); // Reference for payment details section
   const buttonRef = useRef(null); // Reference for submit button
 
+
   // Destructure and retrieve state passed from RentalBooking component
   // Get the passed state from RentalBooking with fallback empty object
-  const { totalAmount, finalAmount, appliance, days } = location.state || {};
+  const { totalAmount, finalAmount, appliance, days, rentalPeriod } = location.state || {};
+
 
   // State management for form data and user inputs
   // State for form data - tracks all form field values
@@ -36,13 +40,22 @@ const Payment = () => {
     endDate: '' // Calculated rental end date
   });
 
+  // State for validation errors
+  const [errors, setErrors] = useState({
+    cardNumber: '',
+    cvv: ''
+  });
+
+
   // State for animations and UI feedback
   // State for animations - manages loading states and visual feedback
   const [isLoading, setIsLoading] = useState(false); // Tracks if payment is being processed
   const [fieldFocus, setFieldFocus] = useState(''); // Tracks which form field has focus for styling
 
+
   // State for calculated dates - manages rental period calculations
   const [calculatedEndDate, setCalculatedEndDate] = useState(''); // Stores calculated end date based on start date and duration
+
 
   // State to track if elements should be animated - controls scroll-triggered animations
   const [shouldAnimate, setShouldAnimate] = useState({
@@ -50,6 +63,7 @@ const Payment = () => {
     paymentDetails: false, // Controls payment details section animation
     button: false // Controls submit button animation
   });
+
 
   // Intersection Observer for scroll animations - triggers animations when elements enter viewport
   useEffect(() => {
@@ -70,6 +84,7 @@ const Payment = () => {
       { threshold: 0.1 } // Trigger when 10% of element is visible
     );
 
+
     // Observe order summary section if ref exists
     if (orderSummaryRef.current) {
       orderSummaryRef.current.id = 'orderSummary'; // Set ID for tracking
@@ -81,9 +96,11 @@ const Payment = () => {
       observer.observe(buttonRef.current); // Start observing element
     }
 
+
     // Cleanup function - disconnect observer when component unmounts
     return () => observer.disconnect();
   }, []); // Empty dependency array - effect runs only once on mount
+
 
   // Calculate end date when start date or rental duration changes
   // Calculate end date when start date or days change
@@ -92,16 +109,24 @@ const Payment = () => {
     if (formData.startDate && days) {
       const startDate = new Date(formData.startDate); // Parse start date
       const endDate = new Date(startDate); // Create end date from start date
-      endDate.setDate(startDate.getDate() + (days * 7)); // Add weeks converted to days
+
+      // Calculate end date based on rental period type
+      if (rentalPeriod === 'weeks') {
+        endDate.setDate(startDate.getDate() + (days * 7)); // Add weeks converted to days
+      } else {
+        endDate.setDate(startDate.getDate() + days); // Add days directly
+      }
+
       setCalculatedEndDate(endDate.toISOString().split('T')[0]); // Store calculated end date
-      
+
       // Update form data with calculated end date
       setFormData(prev => ({
         ...prev,
         endDate: endDate.toISOString().split('T')[0] // Store in YYYY-MM-DD format
       }));
     }
-  }, [formData.startDate, days]); // Dependency array - effect runs when start date or days change
+  }, [formData.startDate, days, rentalPeriod]); // Dependency array - effect runs when start date, days, or rentalPeriod change
+
 
   // Generic input change handler for form fields
   // Handle input changes
@@ -112,13 +137,27 @@ const Payment = () => {
       ...prev,
       [name]: value
     }));
+
+    // Clear error when user types in the field
+    if (name === 'cvv' && errors.cvv) {
+      setErrors(prev => ({ ...prev, cvv: '' }));
+    }
   };
+
 
   // Focus event handler for form fields with visual feedback
   // Handle focus with animation
   const handleFocus = (fieldName) => {
     setFieldFocus(fieldName); // Set currently focused field for styling
+    // Clear error when field is focused
+    if (fieldName === 'cardNumber') {
+      setErrors(prev => ({ ...prev, cardNumber: '' }));
+    }
+    if (fieldName === 'cvv') {
+      setErrors(prev => ({ ...prev, cvv: '' }));
+    }
   };
+
 
   // Blur event handler to clear focus state
   // Handle blur
@@ -126,17 +165,68 @@ const Payment = () => {
     setFieldFocus(''); // Clear focused field state
   };
 
-  // Specialized handler for card number input with auto-formatting
-  // Handle card number formatting
+
+  // Specialized handler for card number input with strict 16-digit validation
+  // Handle card number formatting with strict 16-digit requirement
   const handleCardNumberChange = (e) => {
     let value = e.target.value.replace(/\s/g, '').replace(/\D/g, ''); // Remove spaces and non-digits
-    value = value.replace(/(\d{4})/g, '$1 ').trim(); // Format as XXXX XXXX XXXX XXXX
+    
+    // Limit to 16 digits maximum
+    if (value.length > 16) {
+      value = value.substring(0, 16);
+    }
+
+    // Format as XXXX XXXX XXXX XXXX only if we have digits
+    let formattedValue = value;
+    if (value.length > 0) {
+      formattedValue = value.replace(/(\d{4})/g, '$1 ').trim();
+    }
+
     // Update form data with formatted card number
     setFormData(prev => ({
       ...prev,
-      cardNumber: value
+      cardNumber: formattedValue
     }));
+
+    // Validate card number length
+    if (value.length > 0 && value.length !== 16) {
+      setErrors(prev => ({ 
+        ...prev, 
+        cardNumber: 'Card number must be exactly 16 digits' 
+      }));
+    } else {
+      setErrors(prev => ({ ...prev, cardNumber: '' }));
+    }
   };
+
+
+  // Specialized handler for CVV input with strict 3-digit validation
+  // Handle CVV input with 3-digit requirement
+  const handleCvvChange = (e) => {
+    let value = e.target.value.replace(/\D/g, ''); // Remove non-digit characters
+    
+    // Limit to 3 digits maximum
+    if (value.length > 3) {
+      value = value.substring(0, 3);
+    }
+
+    // Update form data with CVV
+    setFormData(prev => ({
+      ...prev,
+      cvv: value
+    }));
+
+    // Validate CVV length
+    if (value.length > 0 && value.length !== 3) {
+      setErrors(prev => ({ 
+        ...prev, 
+        cvv: 'CVV must be exactly 3 digits' 
+      }));
+    } else {
+      setErrors(prev => ({ ...prev, cvv: '' }));
+    }
+  };
+
 
   // Specialized handler for expiry date input with auto-formatting
   // Handle expiry date formatting
@@ -153,11 +243,13 @@ const Payment = () => {
     }));
   };
 
+
   // Utility function to get today's date in YYYY-MM-DD format for date input min attribute
   // Get today's date in YYYY-MM-DD format for min date
   const getTodayDate = () => {
     return new Date().toISOString().split('T')[0]; // Return current date in YYYY-MM-DD format
   };
+
 
   // Utility function to get maximum date (1 year from now) for date input max attribute
   // Get max date (1 year from now)
@@ -166,6 +258,7 @@ const Payment = () => {
     oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1); // Add 1 year
     return oneYearFromNow.toISOString().split('T')[0]; // Return in YYYY-MM-DD format
   };
+
 
   // Utility function to format date string for user-friendly display
   // Format date for display
@@ -181,16 +274,49 @@ const Payment = () => {
     });
   };
 
+
+  // Form validation function
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Validate card number if payment method requires it
+    if ((formData.paymentMethod === 'credit' || formData.paymentMethod === 'debit') && formData.cardNumber) {
+      const rawCardNumber = formData.cardNumber.replace(/\s/g, '').replace(/\D/g, '');
+      if (rawCardNumber.length !== 16) {
+        newErrors.cardNumber = 'Card number must be exactly 16 digits';
+      }
+    }
+
+    // Validate CVV if payment method requires it
+    if ((formData.paymentMethod === 'credit' || formData.paymentMethod === 'debit') && formData.cvv) {
+      const rawCvv = formData.cvv.replace(/\D/g, '');
+      if (rawCvv.length !== 3) {
+        newErrors.cvv = 'CVV must be exactly 3 digits';
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+
   // Form submission handler with loading state and navigation
   // Handle form submission with loading animation
   const handleDelivery = async (e) => {
     e.preventDefault(); // Prevent default form submission behavior
-    
+
+    // Validate form before submission
+    if (!validateForm()) {
+      return;
+    }
+
     setIsLoading(true); // Set loading state to show processing indicator
+
 
     // Simulate payment processing with 2-second delay
     // Simulate payment processing
     await new Promise(resolve => setTimeout(resolve, 2000));
+
 
     // Prepare complete order data for next page
     // Prepare order data
@@ -200,15 +326,18 @@ const Payment = () => {
       finalAmount: finalAmount || (totalAmount + 20), // Total with insurance deposit
       appliance, // Appliance details
       days, // Rental duration
+      rentalPeriod, // Rental period type (days/weeks)
       rentalPeriod: {
         start: formData.startDate, // Rental start date
         end: calculatedEndDate // Calculated rental end date
       }
     };
 
+
     setIsLoading(false); // Clear loading state
     navigate('/delivery', { state: orderData }); // Navigate to delivery page with order data
   };
+
 
   // Helper function to generate animation styles based on element state
   // Get animation styles
@@ -216,8 +345,8 @@ const Payment = () => {
     // Return initial hidden state if element shouldn't animate yet
     if (!shouldAnimate[element]) {
       return {
-        transform: element === 'orderSummary' ? 'translateY(30px)' : 
-                   element === 'button' ? 'translateY(20px)' : 'translateX(-20px)',
+        transform: element === 'orderSummary' ? 'translateY(30px)' :
+          element === 'button' ? 'translateY(20px)' : 'translateX(-20px)',
         opacity: 0 // Fully transparent
       };
     }
@@ -229,24 +358,25 @@ const Payment = () => {
     };
   };
 
+
   // Component render method - returns JSX for payment interface
   return (
     <div className="main-contact payment-page">
       <Header /> {/* Render header navigation component */}
-      
+
       <div className="container contact-container">
         <div className="contact-content">
           <div className="contact-form">
             {/* Animated Title */}
-            <h2 
-              style={{ 
+            <h2
+              style={{
                 color: '#7B4F2C', // Brand color
                 animation: 'slideInDown 0.8s ease-out' // Entrance animation
               }}
             >
               Payment Information {/* Page heading */}
             </h2>
-            
+
             {/* Conditional rendering - show order summary if appliance data exists */}
             {/* Display order summary with animation */}
             {appliance && (
@@ -265,15 +395,18 @@ const Payment = () => {
               >
                 <h5 style={{ color: '#7B4F2C', margin: '0 0 15px 0', fontSize: '18px' }}>Order Summary</h5>
                 <p style={{ margin: '8px 0' }}><strong>Item:</strong> {appliance.name}</p>
-                <p style={{ margin: '8px 0' }}><strong>Rental Duration:</strong> {days} week(s)</p>
-                
+                <p style={{ margin: '8px 0' }}>
+                  <strong>Rental Duration:</strong> {days} {rentalPeriod}(s)
+                  {rentalPeriod === 'weeks' && ` (${days * 7} days)`}
+                </p>
+
                 {/* Conditional rendering - show rental period if dates are available */}
                 {/* Rental Period Display */}
                 {formData.startDate && calculatedEndDate && (
-                  <div style={{ 
-                    margin: '15px 0', 
-                    padding: '12px', 
-                    backgroundColor: '#e9ecef', 
+                  <div style={{
+                    margin: '15px 0',
+                    padding: '12px',
+                    backgroundColor: '#e9ecef',
                     borderRadius: '8px',
                     borderLeft: '4px solid #7B4F2C' // Brand color accent
                   }}>
@@ -284,9 +417,12 @@ const Payment = () => {
                     <p style={{ margin: '4px 0', fontSize: '14px' }}>
                       <strong>End:</strong> {formatDisplayDate(calculatedEndDate)}
                     </p>
+                    <p style={{ margin: '4px 0', fontSize: '12px', color: '#6c757d', fontStyle: 'italic' }}>
+                      Please return the item by end of day on {formatDisplayDate(calculatedEndDate)}
+                    </p>
                   </div>
                 )}
-                
+
                 <p style={{ margin: '8px 0' }}><strong>Rental Amount:</strong> {totalAmount} OMR</p>
                 <p style={{ margin: '8px 0' }}><strong>Insurance Deposit:</strong> 20 OMR</p>
                 <hr style={{ margin: '15px 0', borderColor: '#dee2e6' }} />
@@ -296,6 +432,7 @@ const Payment = () => {
               </div>
             )}
 
+
             {/* Main payment form */}
             <form onSubmit={handleDelivery}>
               {/* Rental Period Selection */}
@@ -303,9 +440,9 @@ const Payment = () => {
                 <label htmlFor="startDate" style={{ fontWeight: '600', marginBottom: '8px' }}>
                   Rental Start Date <span className="text-danger">*</span>
                 </label>
-                <input 
+                <input
                   type="date" // HTML5 date input
-                  name="startDate" 
+                  name="startDate"
                   className="form-control"
                   style={{
                     padding: '12px',
@@ -314,19 +451,20 @@ const Payment = () => {
                     transition: 'all 0.3s ease', // Smooth transition for focus
                     fontSize: '16px'
                   }}
-                  id="startDate" 
+                  id="startDate"
                   value={formData.startDate}
                   onChange={handleInputChange}
                   onFocus={() => handleFocus('startDate')} // Set focus state
                   onBlur={handleBlur} // Clear focus state
                   min={getTodayDate()} // Prevent past dates
                   max={getMaxDate()} // Limit to 1 year in future
-                  required 
+                  required
                 />
                 <small className="form-text text-muted" style={{ marginTop: '5px' }}>
                   Select when you want the rental period to begin
                 </small>
               </div>
+
 
               {/* Conditional rendering - show calculated end date when available */}
               {/* Display calculated end date with animation */}
@@ -345,17 +483,20 @@ const Payment = () => {
                   <p style={{ margin: 0, color: '#155724', fontWeight: 'bold', fontSize: '15px' }}>
                     📅 Your rental will end on: {formatDisplayDate(calculatedEndDate)}
                   </p>
+                  <p style={{ margin: '5px 0 0 0', color: '#155724', fontSize: '13px' }}>
+                    Please ensure the item is returned by this date to receive your full insurance deposit refund.
+                  </p>
                 </div>
               )}
-              
+
               {/* Email input field */}
               <div className="form-group">
                 <label htmlFor="email" style={{ fontWeight: '600', marginBottom: '8px' }}>
                   Email <span className="text-danger">*</span>
                 </label>
-                <input 
+                <input
                   type="email" // HTML5 email input with validation
-                  name="email" 
+                  name="email"
                   className="form-control"
                   style={{
                     padding: '12px',
@@ -365,23 +506,23 @@ const Payment = () => {
                     fontSize: '16px',
                     boxShadow: fieldFocus === 'email' ? '0 0 0 3px rgba(123, 79, 44, 0.1)' : 'none' // Focus glow
                   }}
-                  id="email" 
-                  placeholder="Enter your email" 
+                  id="email"
+                  placeholder="Enter your email"
                   value={formData.email}
                   onChange={handleInputChange}
                   onFocus={() => handleFocus('email')}
                   onBlur={handleBlur}
-                  required 
+                  required
                 />
               </div>
-              
+
               {/* Payment method selection dropdown */}
               <div className="form-group">
                 <label htmlFor="paymentMethod" style={{ fontWeight: '600', marginBottom: '8px' }}>
                   Payment Method <span className="text-danger">*</span>
                 </label>
-                <select 
-                  id="paymentMethod" 
+                <select
+                  id="paymentMethod"
                   name="paymentMethod"
                   className="form-control"
                   style={{
@@ -408,10 +549,11 @@ const Payment = () => {
                 </select>
               </div>
 
+
               {/* Conditional rendering - show card details when credit/debit card is selected */}
               {/* Card details - SHOW IMMEDIATELY when selected */}
               {(formData.paymentMethod === 'credit' || formData.paymentMethod === 'debit') && (
-                <div className="payment-details" 
+                <div className="payment-details"
                   style={{
                     animation: 'slideInLeft 0.5s ease-out' // Slide-in from left animation
                   }}>
@@ -420,29 +562,38 @@ const Payment = () => {
                     <label htmlFor="cardNumber" style={{ fontWeight: '600', marginBottom: '8px' }}>
                       Card Number <span className="text-danger">*</span>
                     </label>
-                    <input 
-                      type="text" 
-                      name="cardNumber" 
+                    <input
+                      type="text"
+                      name="cardNumber"
                       className="form-control"
                       style={{
                         padding: '12px',
                         borderRadius: '8px',
-                        border: `2px solid ${fieldFocus === 'cardNumber' ? '#7B4F2C' : '#e9ecef'}`,
+                        border: `2px solid ${errors.cardNumber ? '#dc3545' : fieldFocus === 'cardNumber' ? '#7B4F2C' : '#e9ecef'}`,
                         transition: 'all 0.3s ease',
                         fontSize: '16px',
                         boxShadow: fieldFocus === 'cardNumber' ? '0 0 0 3px rgba(123, 79, 44, 0.1)' : 'none',
                         letterSpacing: '1px' // Space between card number groups
                       }}
-                      id="cardNumber" 
-                      placeholder="1234 5678 9012 3456" 
+                      id="cardNumber"
+                      placeholder="1234 5678 9012 3456"
                       value={formData.cardNumber}
                       onChange={handleCardNumberChange} // Specialized handler for formatting
                       onFocus={() => handleFocus('cardNumber')}
                       onBlur={handleBlur}
                       maxLength="19" // Limit to formatted card number length
-                      required 
+                      required
                     />
+                    {errors.cardNumber && (
+                      <div className="text-danger" style={{ fontSize: '14px', marginTop: '5px' }}>
+                        {errors.cardNumber}
+                      </div>
+                    )}
+                    <small className="form-text text-muted" style={{ marginTop: '5px' }}>
+                      Must be exactly 16 digits
+                    </small>
                   </div>
+
 
                   <div className="row">
                     {/* Expiry date input with auto-formatting */}
@@ -450,9 +601,9 @@ const Payment = () => {
                       <label htmlFor="expiryDate" style={{ fontWeight: '600', marginBottom: '8px' }}>
                         Expiry Date <span className="text-danger">*</span>
                       </label>
-                      <input 
-                        type="text" 
-                        name="expiryDate" 
+                      <input
+                        type="text"
+                        name="expiryDate"
                         className="form-control"
                         style={{
                           padding: '12px',
@@ -462,14 +613,14 @@ const Payment = () => {
                           fontSize: '16px',
                           boxShadow: fieldFocus === 'expiryDate' ? '0 0 0 3px rgba(123, 79, 44, 0.1)' : 'none'
                         }}
-                        id="expiryDate" 
-                        placeholder="MM/YY" 
+                        id="expiryDate"
+                        placeholder="MM/YY"
                         value={formData.expiryDate}
                         onChange={handleExpiryDateChange} // Specialized handler for formatting
                         onFocus={() => handleFocus('expiryDate')}
                         onBlur={handleBlur}
                         maxLength="5" // Limit to MM/YY format
-                        required 
+                        required
                       />
                     </div>
                     {/* CVV security code input */}
@@ -477,36 +628,45 @@ const Payment = () => {
                       <label htmlFor="cvv" style={{ fontWeight: '600', marginBottom: '8px' }}>
                         CVV <span className="text-danger">*</span>
                       </label>
-                      <input 
-                        type="text" 
-                        name="cvv" 
+                      <input
+                        type="text"
+                        name="cvv"
                         className="form-control"
                         style={{
                           padding: '12px',
                           borderRadius: '8px',
-                          border: `2px solid ${fieldFocus === 'cvv' ? '#7B4F2C' : '#e9ecef'}`,
+                          border: `2px solid ${errors.cvv ? '#dc3545' : fieldFocus === 'cvv' ? '#7B4F2C' : '#e9ecef'}`,
                           transition: 'all 0.3s ease',
                           fontSize: '16px',
                           boxShadow: fieldFocus === 'cvv' ? '0 0 0 3px rgba(123, 79, 44, 0.1)' : 'none'
                         }}
-                        id="cvv" 
-                        placeholder="123" 
+                        id="cvv"
+                        placeholder="123"
                         value={formData.cvv}
-                        onChange={handleInputChange}
+                        onChange={handleCvvChange} // Specialized handler for CVV
                         onFocus={() => handleFocus('cvv')}
                         onBlur={handleBlur}
-                        maxLength="4" // Allow for 3 or 4 digit CVV
-                        required 
+                        maxLength="3" // Limit to 3 digits
+                        required
                       />
+                      {errors.cvv && (
+                        <div className="text-danger" style={{ fontSize: '14px', marginTop: '5px' }}>
+                          {errors.cvv}
+                        </div>
+                      )}
+                      <small className="form-text text-muted" style={{ marginTop: '5px' }}>
+                        Must be exactly 3 digits
+                      </small>
                     </div>
                   </div>
                 </div>
               )}
 
+
               {/* Conditional rendering - show bank transfer instructions when bank transfer is selected */}
               {/* Bank transfer details - SHOW IMMEDIATELY when selected */}
               {formData.paymentMethod === 'bank' && (
-                <div 
+                <div
                   className="bank-transfer-details"
                   style={{
                     backgroundColor: '#e7f3ff', // Info blue background
@@ -534,13 +694,14 @@ const Payment = () => {
                 </div>
               )}
 
+
               {/* Submit Button with loading state and hover effects */}
               {/* Submit Button */}
-              <button 
+              <button
                 ref={buttonRef} // Attach ref for scroll animation
-                type="submit" 
+                type="submit"
                 className="btn btn-submit"
-                style={{ 
+                style={{
                   width: '100%', // Full width button
                   padding: '15px', // Comfortable padding
                   fontSize: '18px', // Large readable text
@@ -594,6 +755,7 @@ const Payment = () => {
       </div>
       <Footer /> {/* Render footer component */}
 
+
       {/* Embedded CSS animations for the component */}
       {/* Add CSS styles for animations */}
       <style jsx>{`
@@ -602,6 +764,7 @@ const Payment = () => {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
         }
+
 
         /* Scale-in animation for calculated end date */
         @keyframes scaleIn {
@@ -615,6 +778,7 @@ const Payment = () => {
           }
         }
 
+
         /* Slide-down animation for page title */
         @keyframes slideInDown {
           from {
@@ -626,6 +790,7 @@ const Payment = () => {
             opacity: 1;
           }
         }
+
 
         /* Slide-in from left animation for payment sections */
         @keyframes slideInLeft {
@@ -639,6 +804,7 @@ const Payment = () => {
           }
         }
 
+
         /* Page container styling */
         .payment-page {
           position: relative;
@@ -648,6 +814,7 @@ const Payment = () => {
     </div>
   );
 };
+
 
 // Export the component for use in other parts of the application
 export default Payment;

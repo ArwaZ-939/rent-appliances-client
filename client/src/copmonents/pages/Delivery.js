@@ -4,6 +4,7 @@ import Header from '../sections/Header'; // Header component for navigation
 import { useState, useEffect } from 'react'; // React hooks for state management and side effects
 import '../css/Delivery.css'; // CSS styles for delivery page animations, form styling, and layout
 
+
 // Main Delivery component for handling delivery information, form validation, and order tracking
 const Delivery = () => {
   // State management for delivery form, UI interactions, and progress tracking
@@ -11,7 +12,7 @@ const Delivery = () => {
   const [showSuccess, setShowSuccess] = useState(false); // Controls visibility of success message and timeline
   const [currentStep, setCurrentStep] = useState(1); // Tracks current step in delivery timeline (1-5)
   const [progress, setProgress] = useState(0); // Tracks overall progress percentage (0-100%)
-  
+
   // State for form data with validation - stores all form field values
   const [formData, setFormData] = useState({
     area: '', // User's area/locality (e.g., Al Khuwair)
@@ -24,9 +25,11 @@ const Delivery = () => {
     message: '' // Optional delivery notes and instructions
   });
 
+
   // State for field validation errors - tracks validation messages for each field
   const [errors, setErrors] = useState({}); // Object storing error messages keyed by field name
   const [fieldFocus, setFieldFocus] = useState(''); // Tracks which form field currently has focus for visual styling
+
 
   // Effect hook to simulate automatic progress through delivery timeline steps
   // Simulate progress through timeline steps when success state becomes true
@@ -35,6 +38,7 @@ const Delivery = () => {
     if (showSuccess) {
       const steps = [1, 2, 3, 4]; // Steps to progress through (1-4, step 5 is final delivered state)
       let currentIndex = 0; // Track current position in steps array
+
 
       // Set up interval to automatically advance through timeline steps
       const interval = setInterval(() => {
@@ -47,65 +51,69 @@ const Delivery = () => {
         }
       }, 1500); // Advance to next step every 1.5 seconds for smooth progression
 
+
       // Cleanup function to clear interval when component unmounts or dependencies change
       return () => clearInterval(interval);
     }
   }, [showSuccess]); // Dependency array - effect runs only when showSuccess state changes
 
+
   // Comprehensive validation function for individual form fields
   // Validation functions - checks field-specific rules and returns error messages
   const validateField = (name, value) => {
     let error = ''; // Initialize empty error message
-    
+
     // Switch statement handles different validation rules for each field type
     switch (name) {
       case 'area':
         if (!value.trim()) error = 'Area is required'; // Check for empty value
         else if (!/^[a-zA-Z\s\-']+$/.test(value)) error = 'Area should contain only letters and spaces'; // Alpha characters only
         break;
-        
+
       case 'city':
         if (!value.trim()) error = 'City is required'; // Check for empty value
         else if (!/^[a-zA-Z\s\-']+$/.test(value)) error = 'City should contain only letters and spaces'; // Alpha characters only
         break;
-        
+
       case 'street':
         if (!value.trim()) error = 'Street address is required'; // Check for empty value
         else if (value.length < 5) error = 'Street address is too short'; // Minimum length requirement
         break;
-        
+
       case 'number':
         if (!value.trim()) error = 'House number is required'; // Check for empty value
-        else if (!/^[0-9a-zA-Z\-\/]+$/.test(value)) error = 'Enter a valid house/apartment number'; // Alphanumeric with dashes/slashes
+        else if (!/^[0-9a-zA-Z\s\-\/#.,]+$/.test(value)) error = 'Enter a valid house/apartment number'; // Alphanumeric with dashes/slashes
         break;
-        
+
       case 'zipCode':
         if (!value.trim()) error = 'Zip code is required'; // Check for empty value
-        else if (!/^[0-9a-zA-Z\-\s]+$/.test(value)) error = 'Enter a valid zip code'; // Alphanumeric with dashes and spaces
+        else if (!/^\d{3}$/.test(value.replace(/\s/g, ''))) error = 'Enter a valid zip code (3 digits)';
         break;
-        
+
       case 'phone':
         if (!value.trim()) error = 'Phone number is required'; // Check for empty value
-        else if (!/^[\+]?[0-9\s\-\(\)]{8,}$/.test(value)) error = 'Enter a valid phone number'; // International phone format with min 8 digits
+        else if (!/^[79]\d{7}$/.test(value.replace(/\s/g, ''))) error = 'Enter a valid Oman phone number (8 digits starting with 7 or 9)'; // Oman phone format
         break;
-        
+
       default:
         break; // No validation for other fields (preferredTime, message)
     }
-    
+
     return error; // Return the error message (empty string if validation passes)
   };
+
 
   // Generic input change handler with real-time error clearing
   // Handle input changes with validation - updates form data and clears errors as user types
   const handleInputChange = (e) => {
     const { name, value } = e.target; // Extract field name and value from event
-    
+
     // Update form data state with new value while preserving other fields
     setFormData(prev => ({
       ...prev, // Spread previous state to maintain other field values
       [name]: value // Update the specific field that changed
     }));
+
 
     // Clear error when user starts typing in a field that previously had an error
     if (errors[name]) {
@@ -117,38 +125,45 @@ const Delivery = () => {
     }
   };
 
+
   // Focus event handler for visual feedback
   // Handle field focus - updates state to track which field has focus for styling
   const handleFocus = (fieldName) => {
     setFieldFocus(fieldName); // Set the currently focused field name
   };
 
+
   // Blur event handler with validation triggering
   // Handle field blur with validation - validates field when user leaves it
   const handleBlur = (e) => {
     const { name, value } = e.target; // Extract field name and value
     const error = validateField(name, value); // Validate the field value
-    
+
     // Update errors state with validation result
     setErrors(prev => ({
       ...prev, // Spread previous errors
       [name]: error // Set error message for this field
     }));
-    
+
     setFieldFocus(''); // Clear focus state since field is no longer focused
   };
+
 
   // Specialized phone number formatter for Omani number patterns
   // Format phone number as user types - applies Omani phone number formatting
   const handlePhoneChange = (e) => {
     let value = e.target.value.replace(/\D/g, ''); // Remove all non-digit characters
-    
-    // Format as XXX XXX XXX for Omani numbers after user enters sufficient digits
-    // Format as +968 XX XXX XXX for Omani numbers
-    if (value.length > 3) {
-      value = value.replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3'); // Group digits: 912345678 -> 912 345 678
+
+    // Ensure number starts with 7 or 9 and has max 8 digits
+    if (value.length > 0) {
+      const firstDigit = value[0];
+      if (firstDigit !== '7' && firstDigit !== '9') {
+        value = ''; // Clear if doesn't start with 7 or 9
+      } else if (value.length > 8) {
+        value = value.substring(0, 8); // Limit to 8 digits
+      }
     }
-    
+
     // Update form data with formatted phone number
     setFormData(prev => ({
       ...prev,
@@ -156,11 +171,12 @@ const Delivery = () => {
     }));
   };
 
-  // Zip code formatter with auto-uppercase and character filtering
-  // Format zip code - converts to uppercase and removes invalid characters
+
+  // Zip code formatter - only allows numbers and limits to 3 digits
   const handleZipCodeChange = (e) => {
-    let value = e.target.value.toUpperCase().replace(/[^0-9A-Z]/g, ''); // Convert to uppercase, keep only alphanumeric
-    
+    let value = e.target.value.replace(/[^0-9]/g, ''); // Remove any non-numeric characters
+    value = value.slice(0, 3); // Limit to maximum 3 digits
+
     // Update form data with cleaned zip code
     setFormData(prev => ({
       ...prev,
@@ -168,11 +184,12 @@ const Delivery = () => {
     }));
   };
 
+
   // Comprehensive form validation before submission
   // Validate entire form before submission - checks all required fields
   const validateForm = () => {
     const newErrors = {}; // Initialize empty errors object
-    
+
     // Loop through all form data fields (except optional ones)
     Object.keys(formData).forEach(key => {
       // Skip validation for optional fields (message) and pre-selected fields (preferredTime)
@@ -181,15 +198,16 @@ const Delivery = () => {
         if (error) newErrors[key] = error; // Add to errors if validation fails
       }
     });
-    
+
     setErrors(newErrors); // Update errors state with all validation results
     return Object.keys(newErrors).length === 0; // Return true if no errors (form is valid)
   };
 
+
   // Main form submission handler with validation and success flow
   const handleConfirm = (e) => {
     e.preventDefault(); // Prevent default form submission behavior (page reload)
-    
+
     // Validate form before submission - check all fields meet requirements
     // Validate form before submission
     if (!validateForm()) {
@@ -201,22 +219,23 @@ const Delivery = () => {
       }
       return; // Stop submission if validation fails
     }
-    
+
     setIsSubmitting(true); // Set loading state to show processing indicator
-   
+
     // Simulate processing delay for better UX (API call simulation)
     // Simulate processing delay
     setTimeout(() => {
       setIsSubmitting(false); // Clear loading state after processing
       setShowSuccess(true); // Show success message and trigger timeline animation
-     
+
       // Show confirmation alert after success animation appears
       // Show alert after animation
       setTimeout(() => {
-        alert("Your order's on its way! 📦✨ We'll have it at your door soon."); // Success confirmation
+        //  alert("Your order's on its way! 📦✨ We'll have it at your door soon."); // Success confirmation
       }, 1000); // 1 second delay after success state to allow animation to show
     }, 2000); // 2 second processing simulation
   };
+
 
   // Timeline steps configuration for delivery progress visualization
   const timelineSteps = [
@@ -262,11 +281,12 @@ const Delivery = () => {
     }
   ];
 
+
   // Component render method - returns JSX for delivery interface
   return (
     <div className="main-contact">
       <Header /> {/* Render header navigation component with menu and logo */}
-      
+
       <div className="container contact-container">
         <div className="contact-content">
           {/* Animated delivery visualization section */}
@@ -291,6 +311,7 @@ const Delivery = () => {
               <div className="road"></div> {/* Road element for truck to drive along */}
             </div>
 
+
             {/* Floating Packages Animation - decorative floating package emojis */}
             <div className="floating-packages">
               <div className="floating-package p1">📦</div> {/* Floating package with emoji - position 1 */}
@@ -300,10 +321,11 @@ const Delivery = () => {
             </div>
           </div>
 
+
           {/* Main delivery form section */}
           <div className="contact-form">
             <h2 style={{ color: '#7B4F2C' }}>Delivery Information</h2> {/* Page heading with brand color consistency */}
-           
+
             {/* Conditional rendering - success message appears after form submission */}
             {/* Success Animation */}
             {showSuccess && (
@@ -311,6 +333,7 @@ const Delivery = () => {
                 <p className="success-text">Delivery Scheduled Successfully! 🎉</p> {/* Success message with celebration emoji */}
               </div>
             )}
+
 
             {/* Delivery information form with enhanced validation and UX */}
             <form onSubmit={handleConfirm} noValidate> {/* noValidate prevents browser default validation */}
@@ -321,11 +344,11 @@ const Delivery = () => {
                   <label htmlFor="area" className="form-label">
                     Area <span className="text-danger">*</span> {/* Required field indicator */}
                   </label>
-                  <input 
-                    type="text" 
-                    name="area" 
+                  <input
+                    type="text"
+                    name="area"
                     className={`form-control ${errors.area ? 'error-field is-invalid' : ''} ${fieldFocus === 'area' ? 'focused' : ''}`} // Dynamic classes for styling
-                    id="area" 
+                    id="area"
                     placeholder="Enter your area (e.g., Al Khuwair)" /* Helpful example placeholder */
                     value={formData.area}
                     onChange={handleInputChange}
@@ -335,51 +358,51 @@ const Delivery = () => {
                   />
                   {errors.area && <div className="invalid-feedback">{errors.area}</div>} {/* Validation error message */}
                 </div>
-                
+
                 <div className="form-group col-md-6">
                   <label htmlFor="city" className="form-label">
                     City <span className="text-danger">*</span> {/* Required field indicator */}
                   </label>
-                  <input 
-                    type="text" 
-                    name="city" 
+                  <input
+                    type="text"
+                    name="city"
                     className={`form-control ${errors.city ? 'error-field is-invalid' : ''} ${fieldFocus === 'city' ? 'focused' : ''}`} /* Conditional error/focus styling */
-                    id="city" 
+                    id="city"
                     placeholder="Enter your city (e.g., Muscat)" /* Contextual placeholder */
                     value={formData.city}
                     onChange={handleInputChange}
                     onFocus={() => handleFocus('city')}
                     onBlur={handleBlur}
-                    required 
+                    required
                   />
                   {errors.city && <div className="invalid-feedback">{errors.city}</div>} {/* Field-specific error display */}
                 </div>
               </div>
-             
+
               {/* Street Address input - full width for complete address entry */}
               {/* Street Address */}
               <div className="form-group">
                 <label htmlFor="street" className="form-label">
                   Street Address <span className="text-danger">*</span> {/* Required field indicator */}
                 </label>
-                <input 
-                  type="text" 
-                  name="street" 
+                <input
+                  type="text"
+                  name="street"
                   className={`form-control ${errors.street ? 'error-field is-invalid' : ''} ${fieldFocus === 'street' ? 'focused' : ''}`}
-                  id="street" 
+                  id="street"
                   placeholder="Enter street name and area details" /* Guidance for complete address */
                   value={formData.street}
                   onChange={handleInputChange}
                   onFocus={() => handleFocus('street')}
                   onBlur={handleBlur}
-                  required 
+                  required
                 />
                 {errors.street && <div className="invalid-feedback">{errors.street}</div>}
                 <small className="form-text text-muted">
                   Please provide the complete street address for accurate delivery {/* Helper text */}
                 </small>
               </div>
-             
+
               {/* House Number and Zip Code in responsive side-by-side layout */}
               {/* House Number and Zip Code */}
               <div className="row">
@@ -387,66 +410,69 @@ const Delivery = () => {
                   <label htmlFor="number" className="form-label">
                     House/Apartment Number <span className="text-danger">*</span> {/* Required field indicator */}
                   </label>
-                  <input 
-                    type="text" 
-                    name="number" 
+                  <input
+                    type="text"
+                    name="number"
                     className={`form-control ${errors.number ? 'error-field is-invalid' : ''} ${fieldFocus === 'number' ? 'focused' : ''}`}
-                    id="number" 
+                    id="number"
                     placeholder="e.g., 123, Bldg 45, Apt 6" /* Flexible format examples */
                     value={formData.number}
                     onChange={handleInputChange}
                     onFocus={() => handleFocus('number')}
                     onBlur={handleBlur}
-                    required 
+                    required
                   />
                   {errors.number && <div className="invalid-feedback">{errors.number}</div>}
                 </div>
-                
+
                 <div className="form-group col-md-6">
                   <label htmlFor="zipCode" className="form-label">
                     Zip/Postal Code <span className="text-danger">*</span> {/* Required field indicator */}
                   </label>
-                  <input 
-                    type="text" 
-                    name="zipCode" 
+                  <input
+                    type="text"
+                    name="zipCode"
                     className={`form-control ${errors.zipCode ? 'error-field is-invalid' : ''} ${fieldFocus === 'zipCode' ? 'focused' : ''}`}
-                    id="zipCode" 
-                    placeholder="e.g., 113, PC 112" /* Omani postal code examples */
+                    id="zipCode"
+                    placeholder="e.g., 113" /* Omani postal code examples */
                     value={formData.zipCode}
                     onChange={handleZipCodeChange} /* Specialized handler for formatting */
                     onFocus={() => handleFocus('zipCode')}
                     onBlur={handleBlur}
-                    maxLength="10" /* Character limit for zip codes */
-                    required 
+                    // maxLength="10" /* Character limit for zip codes */
+                    required
                   />
                   {errors.zipCode && <div className="invalid-feedback">{errors.zipCode}</div>}
                 </div>
               </div>
 
+
               {/* Phone Number with Omani formatting */}
               {/* Phone Number */}
               <div className="form-group">
                 <label htmlFor="phone" className="form-label">
-                  Phone Number <span className="text-danger">*</span> {/* Required field indicator */}
+                  Phone Number (Oman) <span className="text-danger">*</span> {/* Required field indicator */}
                 </label>
-                <input 
-                  type="tel" 
-                  name="phone" 
+                <input
+                  type="tel"
+                  name="phone"
                   className={`form-control ${errors.phone ? 'error-field is-invalid' : ''} ${fieldFocus === 'phone' ? 'focused' : ''}`}
-                  id="phone" 
-                  placeholder="e.g., 9123 4567" /* Omani phone number example */
+                  id="phone"
+                  placeholder="7XXXXXXX or 9XXXXXXX" /* Omani phone number example */
                   value={formData.phone}
                   onChange={handlePhoneChange} /* Specialized handler for phone formatting */
                   onFocus={() => handleFocus('phone')}
                   onBlur={handleBlur}
-                  maxLength="15" /* Accommodates formatted number length */
-                  required 
+                  maxLength="8" /* 8 digits maximum */
+                  pattern="[79][0-9]{7}" /* Pattern for Oman numbers */
+                  required
                 />
                 {errors.phone && <div className="invalid-feedback">{errors.phone}</div>}
                 <small className="form-text text-muted">
-                  We'll contact you on this number for delivery updates {/* Purpose explanation */}
+                  Please enter an 8-digit Oman number starting with 7 or 9 {/* Purpose explanation */}
                 </small>
               </div>
+
 
               {/* Preferred Delivery Time selection with emoji-enhanced options */}
               {/* Preferred Delivery Time */}
@@ -454,8 +480,8 @@ const Delivery = () => {
                 <label htmlFor="preferredTime" className="form-label">
                   Preferred Delivery Time {/* Optional field - no asterisk */}
                 </label>
-                <select 
-                  name="preferredTime" 
+                <select
+                  name="preferredTime"
                   className="form-control"
                   id="preferredTime"
                   value={formData.preferredTime}
@@ -469,6 +495,7 @@ const Delivery = () => {
                   We'll try our best to deliver during your preferred time {/* Manage expectations */}
                 </small>
               </div>
+
 
               {/* Optional delivery notes for special instructions */}
               {/* Delivery Notes */}
@@ -490,6 +517,7 @@ const Delivery = () => {
                 </small>
               </div>
 
+
               {/* Conditional loading animation during form processing */}
               {/* Loading Animation */}
               {isSubmitting && (
@@ -498,6 +526,7 @@ const Delivery = () => {
                   <p>Processing your delivery request...</p> {/* Loading state message */}
                 </div>
               )}
+
 
               {/* Form submission button with dynamic states */}
               {/* Submit Button */}
@@ -517,10 +546,11 @@ const Delivery = () => {
                   )}
                 </button>
                 <small className="form-text text-muted d-block mt-2">
-                  By confirming, you agree to our delivery terms and conditions {/* Legal disclaimer */}
+                  {/* By confirming, you agree to our delivery terms and conditions Legal disclaimer */}
                 </small>
               </div>
             </form>
+
 
             {/* Advanced delivery timeline section - shows after successful submission */}
             {/* Advanced Delivery Timeline */}
@@ -531,23 +561,23 @@ const Delivery = () => {
                 <div className="progress-indicator">
                   <span className="progress-text">{progress}% Complete</span> {/* Progress percentage display */}
                   <div className="progress-bar">
-                    <div 
-                      className="progress-fill" 
+                    <div
+                      className="progress-fill"
                       style={{ width: `${progress}%` }} /* Dynamic width based on progress state */
                     ></div> {/* Animated progress bar fill */}
                   </div>
                 </div>
               </div>
 
+
               {/* Timeline steps container with staggered animations */}
               <div className="advanced-timeline">
                 {/* Map through timeline steps to render each step with dynamic status */}
                 {timelineSteps.map((step, index) => (
-                  <div 
+                  <div
                     key={step.step} /* Unique key for React rendering optimization */
-                    className={`timeline-item ${step.status} ${
-                      currentStep === step.step ? 'current' : ''
-                    }`} /* Dynamic classes for completed/pending/current states */
+                    className={`timeline-item ${step.status} ${currentStep === step.step ? 'current' : ''
+                      }`} /* Dynamic classes for completed/pending/current states */
                     style={{ animationDelay: `${index * 0.2}s` }} /* Staggered animation timing */
                   >
                     {/* Timeline visual connector and step marker */}
@@ -559,6 +589,7 @@ const Delivery = () => {
                       </div>
                     </div>
 
+
                     {/* Timeline step content area */}
                     <div className="timeline-content">
                       <div className="timeline-header-content">
@@ -566,7 +597,7 @@ const Delivery = () => {
                         <span className="step-time">{step.time}</span> {/* Estimated completion time */}
                       </div>
                       <p className="step-description">{step.description}</p> {/* Step description */}
-                      
+
                       {/* Conditional rendering - shows additional info for current active step */}
                       {/* Additional info for current step */}
                       {currentStep === step.step && (
@@ -577,6 +608,7 @@ const Delivery = () => {
                           </div>
                         </div>
                       )}
+
 
                       {/* Conditional rendering - shows progress animation for current active step */}
                       {/* Progress animation for current step */}
@@ -591,6 +623,7 @@ const Delivery = () => {
                   </div>
                 ))}
               </div>
+
 
               {/* Timeline controls and delivery estimate information */}
               {/* Timeline Controls */}
@@ -614,6 +647,7 @@ const Delivery = () => {
     </div>
   );
 };
+
 
 // Export the component for use in other parts of the application
 export default Delivery;

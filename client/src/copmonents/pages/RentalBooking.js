@@ -4,17 +4,17 @@ import rental from '../assets/rental.avif'; // Image used on the booking page
 import Footer from '../sections/Footer'; // Footer component
 import Header from '../sections/Header'; // Header component
 import { useNavigate, useLocation } from 'react-router-dom'; // Hooks for navigation and accessing passed state
-import { useState, useEffect, useContext } from 'react'; // React hooks for managing state and side effects
-import { DarkModeContext } from '../sections/DarkModeContext';
+import { useState, useEffect } from 'react'; // React hooks for managing state and side effects
+
 
 // Main RentalBooking component for handling appliance rental reservations
 const RentalBooking = () => {
   // Navigation hook to programmatically navigate between pages
   const navigate = useNavigate(); // Used to navigate to the payment page
-  
+
   // Location hook to access state passed from previous route (ProductDetails page)
   const location = useLocation(); // Used to access the state passed from the previous route
-  const { darkMode } = useContext(DarkModeContext);
+
 
   // State management for rental booking form
   // States to manage rental duration, pricing, and selected appliance
@@ -23,6 +23,9 @@ const RentalBooking = () => {
   const [pricePerDay, setPricePerDay] = useState(0); // Cost per day for the selected appliance
   const [appliance, setAppliance] = useState(null); // Appliance data passed from previous page (name, details, etc.)
   const [agreedToTerms, setAgreedToTerms] = useState(false); // Track if user agreed to insurance deposit terms
+  const [rentalPeriod, setRentalPeriod] = useState('days'); // 'days' or 'weeks'
+  const [phoneNumber, setPhoneNumber] = useState(''); // Oman phone number
+
 
   // Effect hook to initialize component state when component mounts or location.state changes
   // Set initial state from the location (router state) when component loads
@@ -35,19 +38,53 @@ const RentalBooking = () => {
     }
   }, [location.state]); // Dependency array - effect runs when location.state changes
 
-  // Effect hook to recalculate total amount whenever rental duration or price changes
-  // Update total amount whenever `days` or `pricePerDay` changes
+
+  // Effect hook to recalculate total amount whenever rental duration, rental period, or price changes
+  // Update total amount whenever `days`, `rentalPeriod` or `pricePerDay` changes
   useEffect(() => {
-    const calculatedAmount = days * pricePerDay; // Calculate total: days × price per day
+    let calculatedAmount;
+    if (rentalPeriod === 'weeks') {
+      calculatedAmount = days * pricePerDay * 7; // Calculate total: weeks × 7 days × price per day
+    } else {
+      calculatedAmount = days * pricePerDay; // Calculate total: days × price per day
+    }
     setTotalAmount(calculatedAmount); // Update state with new calculated amount
-  }, [days, pricePerDay]); // Dependency array - effect runs when days or pricePerDay changes
+  }, [days, pricePerDay, rentalPeriod]); // Dependency array - effect runs when days, pricePerDay or rentalPeriod changes
+
 
   // Event handler for rental duration input changes
-  // Handle changes in the input field for number of days
+  // Handle changes in the input field for number of days/weeks
   const handleDaysChange = (e) => {
     const numberOfDays = parseInt(e.target.value) || 1; // Parse input value, default to 1 if invalid
-    setDays(numberOfDays > 0 ? numberOfDays : 1); // Ensure minimum of 1 day, prevent negative values
+    setDays(numberOfDays > 0 ? numberOfDays : 1); // Ensure minimum of 1 day/week, prevent negative values
   };
+
+
+  // Event handler for rental period radio button changes
+  // Handle rental period selection (days/weeks)
+  const handleRentalPeriodChange = (e) => {
+    setRentalPeriod(e.target.value);
+  };
+
+
+  // Event handler for Oman phone number formatting
+  // Handle Oman phone number input with validation
+  const handlePhoneNumberChange = (e) => {
+    let value = e.target.value.replace(/\D/g, ''); // Remove non-digit characters
+
+    // Ensure number starts with 7 or 9 and has max 8 digits
+    if (value.length > 0) {
+      const firstDigit = value[0];
+      if (firstDigit !== '7' && firstDigit !== '9') {
+        value = ''; // Clear if doesn't start with 7 or 9
+      } else if (value.length > 8) {
+        value = value.substring(0, 8); // Limit to 8 digits
+      }
+    }
+
+    setPhoneNumber(value);
+  };
+
 
   // Event handler for insurance terms agreement checkbox
   // Handle checkbox change for terms agreement
@@ -55,34 +92,45 @@ const RentalBooking = () => {
     setAgreedToTerms(e.target.checked); // Update state based on checkbox checked status
   };
 
+
   // Form submission handler - processes rental booking and navigates to payment page
   // Handle form submission: navigate to the payment page with necessary state
   const handlePayment = (e) => {
     e.preventDefault(); // Prevent default form submission behavior (page reload)
+
+    // Validate Oman phone number
+    if (phoneNumber.length !== 8 || !['7', '9'].includes(phoneNumber[0])) {
+      alert('Please enter a valid Oman phone number (8 digits starting with 7 or 9)');
+      return;
+    }
+
     const finalAmount = totalAmount + 20; // Calculate final amount: rental total + 20 OMR insurance deposit
-    
+
     // Navigate to payment page with all necessary data as route state
-    navigate('/payment', { 
-      state: { 
+    navigate('/payment', {
+      state: {
         totalAmount, // Pass rental amount without insurance deposit
         finalAmount, // Include final amount with insurance deposit added
         appliance, // Pass appliance details for order summary
-        days // Pass rental duration for order processing
-      } 
+        days, // Pass rental duration for order processing
+        rentalPeriod // Pass rental period type (days/weeks)
+      }
     });
   };
+
 
   // Component render method - returns JSX for rental booking interface
   return (
     <>
       {/* Main container for the rental booking page */}
-      <div className={`main-contact ${darkMode ? 'bg-dark text-light' : 'bg-light text-dark'}`}>
+      <div className="main-contact">
         <Header /> {/* Top navigation/header component */}
+
 
         {/* Main content container with responsive layout */}
         <div className="container contact-container">
           <div className="contact-content">
-           
+
             {/* Left side - decorative image section */}
             {/* Left side image */}
             <div>
@@ -95,12 +143,13 @@ const RentalBooking = () => {
               />
             </div>
 
+
             {/* Right side - rental booking form section */}
             {/* Right side form */}
             <div className="contact-form">
               {/* Page heading */}
               <h2 style={{ color: '#7B4F2C' }}>Rental booking</h2>
-             
+
               {/* Conditional rendering - show appliance info if available */}
               {/* Show appliance info if available */}
               {appliance && (
@@ -118,8 +167,13 @@ const RentalBooking = () => {
                   <h5 style={{ color: '#7B4F2C', margin: 0 }}>Renting: {appliance.name}</h5>
                   {/* Appliance description/details */}
                   <p style={{ margin: '5px 0 0 0', fontSize: '14px' }}>{appliance.details}</p>
+                  {/* Display price per day */}
+                  <p style={{ margin: '5px 0 0 0', fontSize: '14px', fontWeight: 'bold' }}>
+                    Price: {pricePerDay} OMR per day
+                  </p>
                 </div>
               )}
+
 
               {/* Insurance deposit information section with warning styling */}
               {/* Insurance Deposit Notice */}
@@ -148,6 +202,7 @@ const RentalBooking = () => {
                 </p>
               </div>
 
+
               {/* Pricing breakdown section showing rental cost calculation */}
               {/* Total rental cost */}
               <div
@@ -160,6 +215,10 @@ const RentalBooking = () => {
                   border: '1px solid #dee2e6' // Light border
                 }}
               >
+                {/* Rental period and duration info */}
+                <p style={{ margin: '0 0 10px 0', fontSize: '14px' }}>
+                  <strong>Rental Period:</strong> {days} {rentalPeriod} ({rentalPeriod === 'weeks' ? days * 7 : days} days)
+                </p>
                 {/* Rental amount line */}
                 <h4 style={{ color: '#7B4F2C', margin: '0 0 5px 0' }}>
                   Rental Amount: {totalAmount} OMR
@@ -174,27 +233,76 @@ const RentalBooking = () => {
                 </h4>
               </div>
 
+
               {/* Main rental booking form */}
               {/* Rental booking form */}
               <form onSubmit={handlePayment}>
+                {/* Rental period selection radio buttons */}
+                <div className="form-group">
+                  <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>
+                    Rental Period <span className="text-danger">*</span>
+                  </label>
+                  <div style={{ display: 'flex', gap: '20px' }}>
+                    <div className="form-check">
+                      <input
+                        type="radio"
+                        className="form-check-input"
+                        id="rentDays"
+                        name="rentalPeriod"
+                        value="days"
+                        checked={rentalPeriod === 'days'}
+                        onChange={handleRentalPeriodChange}
+                        required
+                      />
+                      <label className="form-check-label" htmlFor="rentDays">
+                        Rent by Days
+                      </label>
+                    </div>
+                    <div className="form-check">
+                      <input
+                        type="radio"
+                        className="form-check-input"
+                        id="rentWeeks"
+                        name="rentalPeriod"
+                        value="weeks"
+                        checked={rentalPeriod === 'weeks'}
+                        onChange={handleRentalPeriodChange}
+                        required
+                      />
+                      <label className="form-check-label" htmlFor="rentWeeks">
+                        Rent by Weeks
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Rental duration input section */}
                 {/* Rental duration input */}
                 <div className="row">
                   <div className="form-group">
-                    <label htmlFor="days">Days <span className="text-danger">*</span></label>
+                    <label htmlFor="days">
+                      Number of {rentalPeriod} <span className="text-danger">*</span>
+                    </label>
                     <input
                       type="number" // Numeric input type
                       name="days" // Form field name
-                      className={`form-control ${darkMode ? 'bg-dark text-light border-secondary' : ''}`}
+                      className="form-control" // Bootstrap form control class
                       id="days" // Input ID for label association
-                      placeholder="Number of days to rent" // Placeholder text
+                      placeholder={`Number of ${rentalPeriod} to rent`} // Dynamic placeholder
                       value={days} // Controlled component value
                       onChange={handleDaysChange} // Change event handler
                       min="1" // Minimum value constraint
                       required // HTML5 required attribute
                     />
+                    <small className="form-text text-muted">
+                      {rentalPeriod === 'weeks'
+                        ? `Equivalent to ${days * 7} days of rental`
+                        : `${days} day(s) of rental`
+                      }
+                    </small>
                   </div>
                 </div>
+
 
                 {/* Delivery location input */}
                 {/* Place of delivery input */}
@@ -203,26 +311,35 @@ const RentalBooking = () => {
                   <input
                     type="text" // Text input type
                     name="place" // Form field name
-                    className={`form-control ${darkMode ? 'bg-dark text-light border-secondary' : ''}`}
+                    className="form-control" // Bootstrap form control class
                     id="place" // Input ID for label association
                     placeholder="Place of delivery" // Placeholder text
                     required // HTML5 required attribute
                   />
                 </div>
 
+
                 {/* Contact phone number input */}
                 {/* Phone number input */}
                 <div className="form-group">
-                  <label htmlFor="phone">Phone Number <span className="text-danger">*</span></label>
+                  <label htmlFor="phone">Phone Number (Oman) <span className="text-danger">*</span></label>
                   <input
-                    type="number" maxLength={8}// Telephone input type for better mobile experience
+                    type="tel" // Telephone input type for better mobile experience
                     name="phone" // Form field name
-                    className={`form-control ${darkMode ? 'bg-dark text-light border-secondary' : ''}`}
+                    className="form-control" // Bootstrap form control class
                     id="phone" // Input ID for label association
-                    placeholder="Phone Number" // Placeholder text
+                    placeholder="7XXXXXXX or 9XXXXXXX" // Oman format placeholder
+                    value={phoneNumber}
+                    onChange={handlePhoneNumberChange}
+                    pattern="[79][0-9]{7}" // Pattern for Oman numbers
+                    maxLength="8" // 8 digits maximum
                     required // HTML5 required attribute
                   />
+                  <small className="form-text text-muted">
+                    Please enter an 8-digit Oman number starting with 7 or 9
+                  </small>
                 </div>
+
 
                 {/* Optional additional comments/instructions */}
                 {/* Optional comments */}
@@ -230,12 +347,13 @@ const RentalBooking = () => {
                   <label htmlFor="message">Comments</label>
                   <textarea
                     name="message" // Form field name
-                    className={`form-control ${darkMode ? 'bg-dark text-light border-secondary' : ''}`}
+                    className="form-control" // Bootstrap form control class
                     id="message" // Textarea ID for label association
                     rows="4" // Visible rows count
                     placeholder="Your Comments" // Placeholder text
                   ></textarea>
                 </div>
+
 
                 {/* Terms and conditions agreement checkbox */}
                 {/* Agreement checkbox */}
@@ -255,16 +373,17 @@ const RentalBooking = () => {
                   </div>
                 </div>
 
-                <br/>
+
+                <br />
                 {/* Form submission button with conditional enabling */}
                 {/* Submit button */}
-                <button 
+                <button
                   type="submit" // Button type for form submission
-                  className={`btn btn-submit ${darkMode ? 'btn-outline-light' : 'btn-primary'}`}
-                  disabled={!agreedToTerms} // Disable button until terms are agreed
+                  className="btn btn-submit" // CSS classes for styling
+                  disabled={!agreedToTerms || phoneNumber.length !== 8} // Disable button until terms are agreed and phone is valid
                   style={{
-                    opacity: agreedToTerms ? 1 : 0.6, // Visual feedback for disabled state
-                    cursor: agreedToTerms ? 'pointer' : 'not-allowed' // Cursor feedback
+                    opacity: (agreedToTerms && phoneNumber.length === 8) ? 1 : 0.6, // Visual feedback for disabled state
+                    cursor: (agreedToTerms && phoneNumber.length === 8) ? 'pointer' : 'not-allowed' // Cursor feedback
                   }}
                 >
                   PROCEED TO PAYMENT {/* Button text */}
@@ -274,6 +393,7 @@ const RentalBooking = () => {
           </div>
         </div>
 
+
         {/* Page footer component */}
         {/* Bottom of the page */}
         <Footer />
@@ -281,6 +401,7 @@ const RentalBooking = () => {
     </>
   );
 };
+
 
 // Export the component for use in other parts of the application
 export default RentalBooking;
