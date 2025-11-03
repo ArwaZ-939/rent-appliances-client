@@ -54,13 +54,14 @@ const Profiler = () => {
   // Validate form
   const validateForm = () => {
     // Username validation
-    if (!editForm.username || editForm.username.trim().length < 3) {
-      setMessage({ text: 'Username must be at least 3 characters long', type: 'error' });
-      return false;
-    }
+    const usernameRegex = /^[a-zA-Z][a-zA-Z0-9]*$/;
+    if (!usernameRegex.test(editForm.username.trim())) {
+    setMessage({ text: 'Username must start with a letter and contain only letters or numbers', type: 'error' });
+    return false;
+      }
 
     // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@(gmail\.com)$/;
     if (!editForm.email || !emailRegex.test(editForm.email)) {
       setMessage({ text: 'Please enter a valid email address', type: 'error' });
       return false;
@@ -265,7 +266,7 @@ const Profiler = () => {
                     value={userInfo.gender} 
                     readOnly 
                   />
-                  <small className="text-muted">Gender cannot be changed</small>
+                  <small className="text-muted">Gender can not be changed</small>
                 </div>
               </div>
             </div>
@@ -283,14 +284,6 @@ const Profiler = () => {
               
               {isEditing && (
                 <div>
-                  <button 
-                    type="button" 
-                    className={`btn ${darkMode ? 'btn-outline-light' : 'btn-secondary'} me-2`}
-                    onClick={handleCancel}
-                    disabled={loading}
-                  >
-                    Cancel
-                  </button>
                   <button 
                     type="submit" 
                     className={`btn ${darkMode ? 'btn-outline-light' : 'btn-primary'}`}

@@ -295,7 +295,11 @@ const Register = () => {
               <p>Returns made after the agreed rental period may incur additional charges unless an extension was pre-approved.</p>
               
               <h5>5. The admin can block the user if he violates these policies twice.</h5>
-              <p>When you click on "Submit", this indicates that you agree to these policies.</p>
+              <p>When you register, this indicates that you agree to these policies.</p>
+              
+              <h5>6. Return Policy</h5>
+              <p>Upon the expiry of the agreed-upon period, the renter will be contacted to arrange a convenient time for the device to be collected.</p>
+              <p>When you register, this indicates that you agree to these policies.</p>
             </div>
             <div className="policy-modal-footer">
               <button 

@@ -250,6 +250,7 @@ const UpdateAppliances = () => {
                 className="form-control"
                 placeholder="Enter price .."
                 value={price}
+                min={1}
                 onChange={(e) => setPrice(e.target.value)}
               />
             </div>

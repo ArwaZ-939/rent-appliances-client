@@ -172,7 +172,7 @@ const DeleteAppliances = () => {
                 </Col>
               ))}
               {appliances.filter(a => a.name?.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
-                <Col><p className="text-center">No appliances found.</p></Col>
+                <Col><p className="text-center" style={{ color: 'gray' }}>No appliances found.</p></Col>
               )}
             </Row>
           )}

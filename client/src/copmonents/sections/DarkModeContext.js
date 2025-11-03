@@ -20,7 +20,6 @@ export const DarkModeProvider = ({ children }) => {
     localStorage.setItem('darkMode', darkMode);
   }, [darkMode]);
 
-  // دالة لتبديل الوضع الليلي
   const toggleDarkMode = () => {
     setDarkMode(prev => !prev);
   };

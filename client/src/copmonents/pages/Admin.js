@@ -174,6 +174,7 @@ const Admin = () => {
                 className="form-control"
                 placeholder="Enter price .."
                 value={price}
+                min={1}
                 onChange={(e) => setprice(e.target.value)}
               />
             </div>
