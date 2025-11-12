@@ -4,7 +4,7 @@ import admin from "../assets/admin.png";
 import axios from 'axios';
 import { Modal, ModalHeader, ModalBody, Button } from "reactstrap";
 import { useNavigate } from 'react-router-dom';
-arwa
+
 const Admin = () => {
   // Local state for form inputs
   const [selectedUser, setSelectedUser] = useState("");
@@ -92,6 +92,10 @@ const Admin = () => {
     navigate('/customer-control')
   };
 
+  const handleCustomerFeedback = () => {
+    navigate('/customer-feedback')
+  };
+
 
   return (
     <div className="admin-panel">
@@ -109,6 +113,7 @@ const Admin = () => {
           <li onClick={handleDeleteAppliances} className="menu-item bi bi-trash">&nbsp;Delete Appliance</li>
           <li onClick={handleUpdateAppliances} className="menu-item bi bi-pencil-square">&nbsp;Update Appliance</li>
           <li onClick={handleCustomerControl} className="menu-item bi bi-person-lines-fill">&nbsp; Customer Control</li>
+          <li onClick={handleCustomerFeedback} className="menu-item bi bi-person-lines-fill">&nbsp; Customer Feedback</li>
         </ul>
         <ul className="menu fixed-bottom p-4">
           <li onClick={handleSignOut} className="menu-item bi bi-box-arrow-right">&nbsp;Sign Out</li>

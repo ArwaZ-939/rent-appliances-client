@@ -155,6 +155,10 @@ const UpdateAppliances = () => {
     navigate('/customer-control')
   };
 
+  const handleCustomerFeedback = () => {
+    navigate('/customer-feedback')
+  };
+
   return (
     <div className="admin-panel">
       <div className="sidebar">
@@ -171,6 +175,7 @@ const UpdateAppliances = () => {
           <li onClick={handleDeleteAppliances} className="menu-item bi bi-trash">&nbsp;Delete Appliance</li>
           <li onClick={handleUpdateAppliances} className="menu-item bi bi-pencil-square">&nbsp;Update Appliance</li>
           <li onClick={handleCustomerControl} className="menu-item bi bi-person-lines-fill">&nbsp; Customer Control</li>
+          <li onClick={handleCustomerFeedback} className="menu-item bi bi-person-lines-fill">&nbsp; Customer Feedback</li>
         </ul>
         <ul className="menu fixed-bottom p-4">
           <li onClick={handleSignOut} className="menu-item bi bi-box-arrow-right">&nbsp;Sign Out</li>

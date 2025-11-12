@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import cors from "cors";
 import UserModel from "./Models/User.js";
 import ApplianceModel from "./Models/Appliance.js";
+import FeedbackModel from "./Models/Feedback.js";
 import bcrypt from 'bcrypt';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
@@ -583,6 +584,66 @@ app.get("/getUserProfile/:username", async (req, res) => {
     }
 });
 
-app.listen(5000,()=>{
-    console.log("Server running on port 5000");
+// api for insert new Feedback
+app.post("/addFeedback", async (req, res) => {
+    try {
+        console.log("Received feedback request body:", req.body);
+        
+        // Validate required fields
+        if (!req.body.message || !req.body.message.trim()) {
+            return res.status(400).json({ message: "Feedback message is required." });
+        }
+        
+        const newFeedback = new FeedbackModel({
+            user: req.body.user || "Anonymous",
+            email: req.body.email || "",
+            message: req.body.message.trim(),
+            rating: req.body.rating || 0,
+        });
+        
+        console.log("Creating feedback:", newFeedback);
+        await newFeedback.save();
+        console.log("Feedback saved successfully");
+        return res.status(201).json({ message: "Feedback submitted successfully." });
+    } catch (error) {
+        console.error("Error saving feedback:", error);
+        // Return more specific error messages
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({ message: "Validation error: " + error.message });
+        }
+        return res.status(500).json({ message: "Internal server error.", error: error.message });
+    }
+});
+
+// api for get all Feedback
+app.get("/getFeedback", async (req, res) => {
+    try {
+        console.log("Fetching all feedback...");
+        const feedbacks = await FeedbackModel.find({}).sort({ createdAt: -1 });
+        console.log("Found feedbacks:", feedbacks.length);
+        return res.status(200).json(feedbacks);
+    } catch (error) {
+        console.error("Error fetching feedback:", error);
+        return res.status(500).json({ message: "Internal server error." });
+    }
+});
+
+// api for delete any Feedback
+app.delete('/feedback/:id', async (req, res) => {
+    try {
+        const deletedFeedback = await FeedbackModel.findByIdAndDelete(req.params.id);
+
+        if (!deletedFeedback) {
+            return res.status(404).json({ message: 'Feedback not found' });
+        }
+
+        res.status(200).json({ message: 'Feedback deleted successfully', feedback: deletedFeedback });
+    } catch (error) {
+        res.status(500).json({ message: 'Error deleting feedback', error: error.message });
+    }
+});
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT,()=>{
+    console.log(`Server running on port ${PORT}`);
 })

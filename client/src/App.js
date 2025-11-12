@@ -20,7 +20,7 @@ import UpdateAppliances from './copmonents/pages/UpdateAppliances.js';
 import { DarkModeContext, DarkModeProvider } from './copmonents/sections/DarkModeContext.js';
 import './App.css';
 import './copmonents/css/DarkMode.css';
-
+import CustomerFeedback from './copmonents/pages/CustomerFeedback.js';
 
 
 
@@ -53,6 +53,8 @@ function App() {
     <Route path='/delete-appliances' element={<DeleteAppliances/>}/>
     <Route path='/update-appliances' element={<UpdateAppliances/>}/>
     <Route path='/customer-control' element={<CustomerControl/>}/>
+    <Route path='/customer-feedback' element={<CustomerFeedback/>}/>
+
 
 
 

@@ -246,6 +246,10 @@ const CustomerControl = () => {
     navigate('/customer-control')
   };
 
+  const handleCustomerFeedback = () => {
+    navigate('/customer-feedback')
+  };
+
   return (
     <div className="admin-panel">
       <div className="sidebar">
@@ -262,6 +266,7 @@ const CustomerControl = () => {
           <li onClick={handleDeleteAppliances} className="menu-item bi bi-trash">&nbsp;Delete Appliance</li>
           <li onClick={handleUpdateAppliances} className="menu-item bi bi-pencil-square">&nbsp;Update Appliance</li>
           <li onClick={handleCustomerControl} className="menu-item bi bi-person-lines-fill">&nbsp; Customer Control</li>
+          <li onClick={handleCustomerFeedback} className="menu-item bi bi-person-lines-fill">&nbsp; Customer Feedback</li>
         </ul>
         <ul className="menu fixed-bottom p-4">
           <li onClick={handleSignOut} className="menu-item bi bi-box-arrow-right">&nbsp;Sign Out</li>
@@ -284,8 +289,8 @@ const CustomerControl = () => {
             <Row xs="1" sm="2" md="3" lg="4">
               {users
                 .filter(u => 
-                  u.user?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                  u.email?.toLowerCase().includes(searchTerm.toLowerCase())
+                  u.user?.toLowerCase().startsWith(searchTerm.toLowerCase()) ||
+                  u.email?.toLowerCase().startsWith(searchTerm.toLowerCase())
                 )
                 .map((user) => (
                 <Col key={user._id} className="mb-4">
@@ -310,8 +315,8 @@ const CustomerControl = () => {
                 </Col>
               ))}
               {users.filter(u => 
-                u.user?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                u.email?.toLowerCase().includes(searchTerm.toLowerCase())
+                u.user?.toLowerCase().startsWith(searchTerm.toLowerCase()) ||
+                u.email?.toLowerCase().startsWith(searchTerm.toLowerCase())
               ).length === 0 && (
                 <Col><p className="text-center">No users found.</p></Col>
               )}

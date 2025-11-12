@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import "../css/Admin.css";
-import admin from "../assets/admin.png";
-import axios from "axios";
-import { Modal, ModalHeader, ModalBody, Button, Row, Col, Card, CardBody, CardImg, CardTitle, CardText, Spinner, Input, InputGroup, InputGroupText } from "reactstrap";
+import axios from 'axios';
+import { Modal, ModalHeader, ModalBody, Button, Row, Col, Card, CardBody, CardText, Spinner, Input, InputGroup, InputGroupText } from "reactstrap";
 import { useNavigate } from 'react-router-dom';
 
-const DeleteAppliances = () => {
-  // State for listing and deleting appliances
-  const [appliances, setAppliances] = useState([]);
+const CustomerFeedback = () => {
+  // State for listing and deleting feedback
+  const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [dialogMessage, setDialogMessage] = useState("");
@@ -18,59 +17,53 @@ const DeleteAppliances = () => {
   const Profiler = 'https://static.vecteezy.com/system/resources/thumbnails/013/360/247/small/default-avatar-photo-icon-social-media-profile-sign-symbol-vector.jpg';
   const user = { gender: 'Female', user: 'Admin' };
   const dfimg = 'https://static.vecteezy.com/system/resources/thumbnails/013/360/247/small/default-avatar-photo-icon-social-media-profile-sign-symbol-vector.jpg';
-  const users = [];
   console.log(user);
   
   const navigate = useNavigate();
   
-  // Fetch appliances on mount
+  // Fetch feedback on mount
   useEffect(() => {
-    axios.get('http://localhost:5000/getSpecificAppliance')
+    axios.get('http://localhost:5000/getFeedback')
       .then((res) => {
-        setAppliances(res.data.Appliance || []);
+        setFeedbacks(res.data || []);
         setLoading(false);
       })
       .catch((error) => {
-        console.error('Error fetching appliances:', error);
-        setDialogMessage('Failed to load appliances');
+        console.error('Error fetching feedback:', error);
+        setDialogMessage('Failed to load feedback');
         setShowDialog(true);
         setLoading(false);
       });
   }, []);
 
-  // Delete appliance by id
+  // Delete feedback by id
   const confirmDelete = (id) => {
     setConfirmId(id);
     // Fallback: if modal doesn't show (CSS/Bootstrap not loaded), use native confirm
     setTimeout(() => {
       const modalVisible = !!document.querySelector('.modal.show');
       if (!modalVisible) {
-        if (window.confirm('Are you sure you want to delete this appliance?')) {
+        if (window.confirm('Are you sure you want to delete this feedback?')) {
           handleImmediateDelete(id);
         }
       }
     }, 50);
   };
+  
   const cancelDelete = () => setConfirmId(null);
+  
   const handleDelete = () => {
     if (!confirmId) return;
-    axios.delete(`http://localhost:5000/appliances/${confirmId}`)
+    axios.delete(`http://localhost:5000/feedback/${confirmId}`)
       .then((res) => {
-        setAppliances((prev) => prev.filter(a => a._id !== confirmId));
-        setDialogMessage(res.data?.message || 'Appliance deleted successfully');
+        setFeedbacks((prev) => prev.filter(f => f._id !== confirmId));
+        setDialogMessage(res.data?.message || 'Feedback deleted successfully');
         setShowDialog(true);
-        // Notify other pages (e.g., Home catalog) about the deletion
-        try {
-          window.dispatchEvent(new CustomEvent('appliance:deleted', { detail: { id: confirmId } }));
-          window.dispatchEvent(new Event('appliance:refresh'));
-        } catch (_) {}
         setConfirmId(null);
-        // Navigate to home to ensure fresh fetch
-        navigate('/home');
       })
       .catch((error) => {
-        console.error('Error deleting appliance:', error?.response?.data || error);
-        setDialogMessage(error?.response?.data?.message || 'Failed to delete appliance');
+        console.error('Error deleting feedback:', error?.response?.data || error);
+        setDialogMessage(error?.response?.data?.message || 'Failed to delete feedback');
         setShowDialog(true);
         setConfirmId(null);
       });
@@ -79,21 +72,43 @@ const DeleteAppliances = () => {
   // Immediate delete without modal (useful if modal isn't showing for you)
   const handleImmediateDelete = (id) => {
     if (!id) return;
-    axios.delete(`http://localhost:5000/appliances/${id}`)
+    axios.delete(`http://localhost:5000/feedback/${id}`)
       .then((res) => {
-        setAppliances((prev) => prev.filter(a => a._id !== id));
-        setDialogMessage(res.data?.message || 'Appliance deleted successfully');
+        setFeedbacks((prev) => prev.filter(f => f._id !== id));
+        setDialogMessage(res.data?.message || 'Feedback deleted successfully');
         setShowDialog(true);
-        try {
-          window.dispatchEvent(new CustomEvent('appliance:deleted', { detail: { id } }));
-          window.dispatchEvent(new Event('appliance:refresh'));
-        } catch (_) {}
       })
       .catch((error) => {
-        console.error('Error deleting appliance:', error?.response?.data || error);
-        setDialogMessage(error?.response?.data?.message || 'Failed to delete appliance');
+        console.error('Error deleting feedback:', error?.response?.data || error);
+        setDialogMessage(error?.response?.data?.message || 'Failed to delete feedback');
         setShowDialog(true);
       });
+  };
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  // Render stars for rating
+  const renderStars = (rating) => {
+    const stars = [];
+    for (let i = 1; i <= 5; i++) {
+      stars.push(
+        <span key={i} style={{ color: i <= rating ? '#ffc107' : '#e0e0e0', fontSize: '1.2rem' }}>
+          ★
+        </span>
+      );
+    }
+    return stars;
   };
 
   const handleSignOut = () => {
@@ -120,13 +135,14 @@ const DeleteAppliances = () => {
     navigate('/customer-feedback')
   };
 
+
   return (
     <div className="admin-panel">
       <div className="sidebar">
         <div className="profile text-center mb-4">
           <img src={Profiler ? Profiler : dfimg} alt="Profile" className="rounded-circle mb-2" />
           <p className="user-role">Admin</p>
-          <p>{user.gender =='Male'? 'Mr.':'Ms.'} {user.user}</p>
+          <p>{user.gender === 'Male'? 'Mr.':'Ms.'} {user.user}</p>
          <br/>
          &nbsp;
          <br/>
@@ -148,43 +164,60 @@ const DeleteAppliances = () => {
       &nbsp;
       <div className="container-admin">
         <div className="left-section-admin" style={{ width: '100%' }}>
-          <h2>Delete Appliances</h2>
+          <h2>Customer Feedback</h2>
           <InputGroup className="mb-3">
-            <Input type="text" placeholder="Search by name..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            <Input type="text" placeholder="Search by user name or email..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             <InputGroupText className="bi bi-search" />
           </InputGroup>
           {loading ? (
             <div className="text-center my-4"><Spinner color="primary" /></div>
           ) : (
             <Row xs="1" sm="2" md="3" lg="4">
-              {appliances
-                .filter(a => a.name?.toLowerCase().startsWith(searchTerm.toLowerCase()))
-                .map((appliance) => (
-                <Col key={appliance._id} className="mb-4">
+              {feedbacks
+                .filter(f => 
+                  f.user?.toLowerCase().startsWith(searchTerm.toLowerCase()) ||
+                  f.email?.toLowerCase().startsWith(searchTerm.toLowerCase())
+                )
+                .map((feedback) => (
+                <Col key={feedback._id} className="mb-4">
                   <Card className="shadow-sm h-100">
-                    {appliance.imgUrl ? (
-                      <CardImg top src={appliance.imgUrl} alt={appliance.name} style={{ height: '160px', objectFit: 'cover' }} />
-                    ) : null}
                     <CardBody>
-                      <CardTitle tag="h5">{appliance.name}</CardTitle>
-                      <CardText><strong>Price:</strong> {appliance.price}</CardText>
-                      <CardText className="text-truncate" title={appliance.details}>{appliance.details}</CardText>
+                      <CardText><strong>User:</strong> {feedback.user || 'Anonymous'}</CardText>
+                      <CardText><strong>Email:</strong> {feedback.email || 'N/A'}</CardText>
+                      <CardText><strong>Rating:</strong> {renderStars(feedback.rating || 0)} ({feedback.rating || 0}/5)</CardText>
+                      <CardText><strong>Date:</strong> {formatDate(feedback.createdAt)}</CardText>
+                      <CardText style={{ marginTop: '10px', padding: '10px', backgroundColor: '#f8f9fa', borderRadius: '5px', minHeight: '80px' }}>
+                        <strong>Feedback:</strong><br/>
+                        {feedback.message}
+                      </CardText>
                       <div className="d-flex gap-2">
-                        <Button color="danger" size="sm" onClick={() => confirmDelete(appliance._id)} className="bi bi-trash">&nbsp; Delete</Button>
+                        <Button color="danger" size="sm" onClick={() => confirmDelete(feedback._id)} className="bi bi-trash">&nbsp; Delete</Button>
                       </div>
                     </CardBody>
                   </Card>
                 </Col>
               ))}
-              {appliances.filter(a => a.name?.toLowerCase().startsWith(searchTerm.toLowerCase())).length === 0 && (
-                <Col><p className="text-center" style={{ color: 'gray' }}>No appliances found.</p></Col>
+              {feedbacks.filter(f => 
+                f.user?.toLowerCase().startsWith(searchTerm.toLowerCase()) ||
+                f.email?.toLowerCase().startsWith(searchTerm.toLowerCase())
+              ).length === 0 && (
+                <Col><p className="text-center" style={{ color: 'gray' }}>No feedback found.</p></Col>
               )}
             </Row>
           )}
         </div>
-
       </div>
-      <Modal isOpen={showDialog} toggle={() => setShowDialog(false)}>
+      <Modal isOpen={!!confirmId} toggle={cancelDelete}>
+        <ModalHeader toggle={cancelDelete}>Confirm Delete</ModalHeader>
+        <ModalBody>
+          <p>Are you sure you want to delete this feedback?</p>
+          <div className="d-flex gap-2">
+            <Button color="danger" onClick={handleDelete}>Delete</Button>
+            <Button color="secondary" onClick={cancelDelete}>Cancel</Button>
+          </div>
+        </ModalBody>
+      </Modal>
+      <Modal isOpen={showDialog && !confirmId} toggle={() => setShowDialog(false)}>
         <ModalHeader toggle={() => setShowDialog(false)}>Message</ModalHeader>
         <ModalBody>
           <p>{dialogMessage}</p>
@@ -194,4 +227,4 @@ const DeleteAppliances = () => {
   );
 };
 
-export default DeleteAppliances;
+export default CustomerFeedback;

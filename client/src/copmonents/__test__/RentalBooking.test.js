@@ -8,7 +8,7 @@ const sanitizeOmanPhoneNumber = (value) => {
   // Ensure number starts with 7 or 9 and has max 8 digits
   if (sanitized.length > 0) {
     const firstDigit = sanitized[0];
-    if (firstDigit !== '6') {
+    if (firstDigit !== '7' && firstDigit !== '9') {
       sanitized = ''; // Clear if doesn't start with 7 or 9
     } else if (sanitized.length > 8) {
       sanitized = sanitized.substring(0, 8); // Limit to 8 digits
