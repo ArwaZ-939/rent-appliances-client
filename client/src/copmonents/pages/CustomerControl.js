@@ -18,6 +18,7 @@ const CustomerControl = () => {
   const [dialogMessage, setDialogMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [userOrders, setUserOrders] = useState({}); // Store orders by username
 
   // Fetching user profile and users list from the Redux store
   const Profiler = 'https://static.vecteezy.com/system/resources/thumbnails/013/360/247/small/default-avatar-photo-icon-social-media-profile-sign-symbol-vector.jpg';
@@ -28,14 +29,28 @@ const CustomerControl = () => {
   
   const navigate = useNavigate();
 
-  // Fetch users on component mount
+  // Fetch users and their orders on component mount
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         console.log('Fetching users from server...');
         const response = await axios.get('http://localhost:3000/getUsers');
         console.log('Received users:', response.data);
-        setUsers(response.data || []);
+        const usersData = response.data || [];
+        setUsers(usersData);
+        
+        // Fetch orders for all users
+        const ordersMap = {};
+        for (const user of usersData) {
+          try {
+            const ordersResponse = await axios.get(`http://localhost:5000/getUserOrders/${user.user}`);
+            ordersMap[user.user] = ordersResponse.data || [];
+          } catch (error) {
+            console.error(`Error fetching orders for ${user.user}:`, error);
+            ordersMap[user.user] = [];
+          }
+        }
+        setUserOrders(ordersMap);
         setLoading(false);
       } catch (error) {
         console.error('Error fetching users:', error);
@@ -106,12 +121,46 @@ const CustomerControl = () => {
       });
   };
 
+  // Check if user has active orders
+  const hasActiveOrders = (username) => {
+    const orders = userOrders[username] || [];
+    return orders.some(order => order.status === 'pending' || order.status === 'active');
+  };
+
+  // Get active orders for a user
+  const getActiveOrders = (username) => {
+    const orders = userOrders[username] || [];
+    return orders.filter(order => order.status === 'pending' || order.status === 'active');
+  };
+
   // Delete user by id (direct deletion without confirmation)
-  const confirmDelete = (id) => {
+  const confirmDelete = async (id) => {
     if (!id) return;
+    
+    const userToDelete = users.find(u => u._id === id);
+    if (!userToDelete) return;
+
+    // Check if user has active orders
+    if (hasActiveOrders(userToDelete.user)) {
+      const activeOrders = getActiveOrders(userToDelete.user);
+      const applianceNames = activeOrders.map(o => o.appliance).join(', ');
+      setDialogMessage(
+        `Cannot delete user "${userToDelete.user}". They have ${activeOrders.length} active order(s) that must be returned first: ${applianceNames}`
+      );
+      setShowDialog(true);
+      return;
+    }
+
+    // Proceed with deletion if no active orders
     axios.delete(`http://localhost:3000/deleteUser/${id}`)
       .then((res) => {
         setUsers((prev) => prev.filter(u => u._id !== id));
+        // Remove orders from state
+        setUserOrders((prev) => {
+          const updated = { ...prev };
+          delete updated[userToDelete.user];
+          return updated;
+        });
         setDialogMessage(res.data?.message || 'User deleted successfully');
         setShowDialog(true);
         // Notify other pages about the deletion
@@ -250,6 +299,10 @@ const CustomerControl = () => {
     navigate('/customer-feedback')
   };
 
+  const handleCustomerChat = () => {
+    navigate('/customer-chat')
+  };
+
   return (
     <div className="admin-panel">
       <div className="sidebar">
@@ -267,6 +320,7 @@ const CustomerControl = () => {
           <li onClick={handleUpdateAppliances} className="menu-item bi bi-pencil-square">&nbsp;Update Appliance</li>
           <li onClick={handleCustomerControl} className="menu-item bi bi-person-lines-fill">&nbsp; Customer Control</li>
           <li onClick={handleCustomerFeedback} className="menu-item bi bi-person-lines-fill">&nbsp; Customer Feedback</li>
+          <li onClick={handleCustomerChat} className="menu-item bi bi-person-lines-fill">&nbsp; Customer Chat</li>
         </ul>
         <ul className="menu fixed-bottom p-4">
           <li onClick={handleSignOut} className="menu-item bi bi-box-arrow-right">&nbsp;Sign Out</li>
@@ -307,8 +361,58 @@ const CustomerControl = () => {
                       <CardText><strong>Email:</strong> {user.email}</CardText>
                       <CardText><strong>Gender:</strong> {user.gender}</CardText>
                       <CardText><strong>Role:</strong> {user.isAdmin ? 'Admin' : 'User'}</CardText>
+                      
+                      {/* Order Information */}
+                      {(() => {
+                        const orders = userOrders[user.user] || [];
+                        const activeOrders = getActiveOrders(user.user);
+                        const hasActive = hasActiveOrders(user.user);
+                        
+                        return (
+                          <>
+                            {orders.length > 0 && (
+                              <CardText>
+                                <strong>Orders:</strong> {orders.length} total
+                                {hasActive && (
+                                  <span style={{ color: '#dc3545', fontWeight: 'bold', marginLeft: '8px' }}>
+                                    ({activeOrders.length} active)
+                                  </span>
+                                )}
+                              </CardText>
+                            )}
+                            {hasActive && (
+                              <div style={{ 
+                                padding: '8px', 
+                                backgroundColor: '#fff3cd', 
+                                border: '1px solid #ffc107',
+                                borderRadius: '4px',
+                                marginBottom: '10px',
+                                fontSize: '12px'
+                              }}>
+                                <i className="bi bi-exclamation-triangle-fill" style={{ color: '#856404', marginRight: '5px' }}></i>
+                                <strong style={{ color: '#856404' }}>Active Order(s):</strong>
+                                <ul style={{ margin: '5px 0 0 0', paddingLeft: '20px', color: '#856404' }}>
+                                  {activeOrders.map((order, idx) => (
+                                    <li key={idx}>{order.appliance} (Status: {order.status})</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+                      
                       <div className="d-flex gap-2">
-                        <Button color="danger" size="sm" onClick={() => confirmDelete(user._id)} className="bi bi-trash">&nbsp; Delete</Button>
+                        <Button 
+                          color="danger" 
+                          size="sm" 
+                          onClick={() => confirmDelete(user._id)} 
+                          className="bi bi-trash"
+                          disabled={hasActiveOrders(user.user)}
+                          title={hasActiveOrders(user.user) ? 'Cannot delete user with active orders. Please return appliances first.' : 'Delete user'}
+                        >
+                          &nbsp; Delete
+                        </Button>
                       </div>
                     </CardBody>
                   </Card>

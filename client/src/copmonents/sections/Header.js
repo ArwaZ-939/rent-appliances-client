@@ -130,6 +130,9 @@ const Header = () => {
                 <DropdownItem onClick={() => navigate('/feedback')}>
                   <i className="bi bi-pencil-square me-2"></i> Feedback and Rating
                 </DropdownItem>
+                <DropdownItem onClick={() => navigate('/smart-recom')}>
+                  <i className="bi bi-lightbulb me-2"></i> Smart Recommendation
+                </DropdownItem>
                 <DropdownItem onClick={() => navigate('/help')}>
                   <i className="bi bi-question-circle me-2"></i> Help
                 </DropdownItem>
