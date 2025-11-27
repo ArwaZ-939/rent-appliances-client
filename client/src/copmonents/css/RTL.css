@@ -1,0 +1,93 @@
+/* RTL Support for Arabic */
+[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+[dir="rtl"] .sidebar {
+  right: 0;
+  left: auto;
+}
+
+[dir="rtl"] .admin-panel > div[style*="marginLeft"] {
+  margin-right: 250px;
+  margin-left: 0;
+}
+
+[dir="rtl"] .admin-panel > div[style*="margin-left"] {
+  margin-right: 250px;
+  margin-left: 0;
+}
+
+[dir="rtl"] .input-group-prepend {
+  order: 2;
+}
+
+[dir="rtl"] .input-group-append {
+  order: 0;
+}
+
+[dir="rtl"] .form-control {
+  text-align: right;
+}
+
+[dir="rtl"] .nav-button {
+  text-align: right;
+}
+
+[dir="rtl"] .menu {
+  text-align: right;
+}
+
+[dir="rtl"] .menu-item {
+  text-align: right;
+}
+
+[dir="rtl"] .dropdown-menu {
+  text-align: right;
+}
+
+[dir="rtl"] .modal-header,
+[dir="rtl"] .modal-body,
+[dir="rtl"] .modal-footer {
+  text-align: right;
+}
+
+[dir="rtl"] .text-start {
+  text-align: right !important;
+}
+
+[dir="rtl"] .text-end {
+  text-align: left !important;
+}
+
+[dir="rtl"] .me-2,
+[dir="rtl"] .me-3,
+[dir="rtl"] .me-4,
+[dir="rtl"] .me-5 {
+  margin-left: 0.5rem !important;
+  margin-right: 0 !important;
+}
+
+[dir="rtl"] .ms-2,
+[dir="rtl"] .ms-3 {
+  margin-right: 0.5rem !important;
+  margin-left: 0 !important;
+}
+
+[dir="rtl"] .bi {
+  display: inline-block;
+}
+
+[dir="rtl"] .container-login {
+  direction: rtl;
+}
+
+[dir="rtl"] .left-section-login {
+  order: 2;
+}
+
+[dir="rtl"] .right-section-login {
+  order: 1;
+}
+

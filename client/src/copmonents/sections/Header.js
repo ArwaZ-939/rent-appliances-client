@@ -3,6 +3,8 @@ import { Navbar, NavbarBrand, Nav, NavItem, Dropdown, DropdownToggle, DropdownMe
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { DarkModeContext } from './DarkModeContext';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from './LanguageSwitcher';
 
 const Header = () => {
   const [userInfo, setUserInfo] = useState({
@@ -94,6 +96,7 @@ const Header = () => {
   };
 
   const { darkMode, toggleDarkMode } = useContext(DarkModeContext);
+  const { t } = useTranslation();
 
   // Specific functions for light and dark mode
   const switchToLightMode = () => {
@@ -115,12 +118,12 @@ const Header = () => {
     
     // Check if it's exactly 8 digits
     if (!/^\d{8}$/.test(cleanedPhone)) {
-      return 'Phone number must be exactly 8 digits';
+      return t('notifications.phoneInvalid');
     }
     
     // Check if it starts with 7 or 9
     if (!/^[79]/.test(cleanedPhone)) {
-      return 'Oman phone number must start with 7 or 9';
+      return t('notifications.phoneStartError');
     }
     
     return ''; // No error
@@ -163,7 +166,7 @@ const Header = () => {
     // Validate if SMS is selected
     if (notificationPreferences.sms) {
       if (!phoneNumber.trim()) {
-        setPhoneError('Phone number is required for SMS notifications');
+        setPhoneError(t('notifications.phoneRequired'));
         return;
       }
       
@@ -185,7 +188,7 @@ const Header = () => {
     localStorage.setItem('notificationPreferences', JSON.stringify(preferencesToSave));
     
     console.log('Notification preferences saved:', preferencesToSave);
-    alert('Notification preferences saved successfully!');
+    alert(t('notifications.savedSuccessfully'));
     setNotificationModal(false);
     setPhoneError('');
   };
@@ -220,7 +223,7 @@ const Header = () => {
             </div>
             <NavbarBrand href="#" style={{ cursor: 'pointer' }} onClick={() => navigate("/profile")}>
               <h5 className="mb-0">
-                {userInfo.gender === 'Male' ? 'Mr.' : 'Ms.'} {userInfo.user}
+                {userInfo.gender === 'Male' ? t('profile.mr') : t('profile.ms')} {userInfo.user}
               </h5>
             </NavbarBrand>
           </div>
@@ -229,41 +232,46 @@ const Header = () => {
           <Nav className="d-flex align-items-center gap-3" navbar>
             <NavItem>
               <button className="nav-button" onClick={() => navigate('/home')}>
-                Home
+                {t('header.home')}
               </button>
             </NavItem>
             <NavItem>
               <button className="nav-button" onClick={() => navigate('/contact')}>
-                Contact us
+                {t('header.contactUs')}
               </button>
             </NavItem>
             <NavItem>
               <Dropdown isOpen={dropdownOpen} toggle={toggleDropdown}>
                 <DropdownToggle nav caret className="nav-button">
-                  More
+                  {t('header.more')}
                 </DropdownToggle>
                 <DropdownMenu>
-                  <DropdownItem header>Options</DropdownItem>
+                  <DropdownItem header>{t('common.options')}</DropdownItem>
                   <DropdownItem onClick={() => navigate('/feedback')}>
-                    <i className="bi bi-pencil-square me-2"></i> Feedback and Rating
+                    <i className="bi bi-pencil-square me-2"></i> {t('header.feedbackAndRating')}
                   </DropdownItem>
                   <DropdownItem onClick={() => navigate('/smart-recom')}>
-                    <i className="bi bi-lightbulb me-2"></i> Smart Recommendation
+                    <i className="bi bi-lightbulb me-2"></i> {t('header.smartRecommendation')}
                   </DropdownItem>
                   <DropdownItem onClick={toggleNotificationModal}>
-                    <i className="bi bi-bell me-2"></i> Notifications
+                    <i className="bi bi-bell me-2"></i> {t('header.notifications')}
                   </DropdownItem>
                   <DropdownItem onClick={() => navigate('/help')}>
-                    <i className="bi bi-question-circle me-2"></i> Help
+                    <i className="bi bi-question-circle me-2"></i> {t('header.help')}
                   </DropdownItem>
                   <DropdownItem onClick={() => {
                     localStorage.removeItem('username');
                     navigate('/');
                   }}>
-                    <i className="bi bi-box-arrow-left me-2"></i> Sign Out
+                    <i className="bi bi-box-arrow-left me-2"></i> {t('header.signOut')}
                   </DropdownItem>
                 </DropdownMenu>
               </Dropdown>
+            </NavItem>
+
+            {/* Language Switcher */}
+            <NavItem>
+              <LanguageSwitcher />
             </NavItem>
 
             {/* Dark Mode Toggle */}
@@ -289,7 +297,7 @@ const Header = () => {
 
       {/* Notification Settings Modal */}
       <Modal isOpen={notificationModal} toggle={toggleNotificationModal} className={darkMode ? 'dark-mode-modal' : ''}>
-        <ModalHeader toggle={toggleNotificationModal}>Notification Settings</ModalHeader>
+        <ModalHeader toggle={toggleNotificationModal}>{t('notifications.title')}</ModalHeader>
         <ModalBody>
           <Form>
             <FormGroup check className="mb-3">
@@ -299,10 +307,10 @@ const Header = () => {
                   checked={notificationPreferences.email}
                   onChange={() => handlePreferenceChange('email')}
                 />{' '}
-                Receive notifications via Email
+                {t('notifications.emailNotifications')}
               </Label>
               <small className="form-text text-muted d-block">
-                Notifications will be sent to: {userInfo.email || 'Your registered email'}
+                {t('notifications.notificationsTo')}: {userInfo.email || t('notifications.yourRegisteredEmail')}
               </small>
             </FormGroup>
 
@@ -313,17 +321,17 @@ const Header = () => {
                   checked={notificationPreferences.sms}
                   onChange={() => handlePreferenceChange('sms')}
                 />{' '}
-                Receive notifications via SMS
+                {t('notifications.smsNotifications')}
               </Label>
             </FormGroup>
 
             {notificationPreferences.sms && (
               <FormGroup>
-                <Label for="phoneNumber">Oman Phone Number</Label>
+                <Label for="phoneNumber">{t('notifications.phoneNumber')}</Label>
                 <Input
                   type="tel"
                   id="phoneNumber"
-                  placeholder="Enter your Oman phone number (e.g., 91234567)"
+                  placeholder={t('notifications.phonePlaceholder')}
                   value={phoneNumber}
                   onChange={handlePhoneNumberChange}
                   invalid={!!phoneError}
@@ -331,7 +339,7 @@ const Header = () => {
                 />
                 {phoneError && <FormFeedback>{phoneError}</FormFeedback>}
                 <small className="form-text text-muted">
-                  Oman phone number must be 8 digits and start with 7 or 9 (e.g., 91234567 or 71234567)
+                  {t('notifications.phoneFormat')}
                 </small>
               </FormGroup>
             )}
@@ -339,14 +347,14 @@ const Header = () => {
         </ModalBody>
         <ModalFooter>
           <button className="btn btn-secondary" onClick={toggleNotificationModal}>
-            Cancel
+            {t('common.cancel')}
           </button>
           <button 
             className="btn btn-primary" 
             onClick={handleNotificationSave}
             disabled={isSaveDisabled()}
           >
-            Save Preferences
+            {t('notifications.savePreferences')}
           </button>
         </ModalFooter>
       </Modal>

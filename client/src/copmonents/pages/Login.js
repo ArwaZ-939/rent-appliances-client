@@ -7,6 +7,8 @@ import { useForm } from "react-hook-form";
 import ValidationLogin from "../../validations/LoginValidation";
 import axios from "axios";
 import { DarkModeContext } from '../sections/DarkModeContext';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from '../sections/LanguageSwitcher';
 
 const Login = () => {
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -15,6 +17,7 @@ const Login = () => {
   const [faild, setFaild] = useState("");
   const [loading, setLoading] = useState(false);
   const { darkMode } = useContext(DarkModeContext);
+  const { t } = useTranslation();
 
   const togglePasswordVisibility = () => {
     setPasswordVisible(!passwordVisible);
@@ -42,7 +45,7 @@ const Login = () => {
     } catch (error) {
       console.error("Login failed:", error);
       setLoading(false);
-      setFaild("Invalid Username or Password !!");
+      setFaild(t('login.invalidCredentials'));
     }
   };
 
@@ -61,11 +64,14 @@ const Login = () => {
   return (
     <>
       <form className={`container-login ${darkMode ? 'bg-dark text-light' : 'bg-light text-dark'}`}>
+        <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 1000 }}>
+          <LanguageSwitcher />
+        </div>
         <div className="left-section-login ">
           <img src={loginLogo} alt="Signup Illustration" />
         </div>
         <div className="right-section-login ">
-          <h2 className="signin">Sign in to your account</h2>
+          <h2 className="signin">{t('login.title')}</h2>
           <span className="error small">{errors.username?.message}</span>
           <div className="input-group">
             <div className="input-group-prepend">
@@ -81,7 +87,7 @@ const Login = () => {
               type="text"
               id="name"
               className={`form-control ${darkMode ? 'bg-dark text-light border-secondary' : ''}`}
-              placeholder="Username"
+              placeholder={t('login.placeholderUsername')}
               {...register("username", {
                 value: user,
                 onChange: (e) => setUser(e.target.value),
@@ -103,7 +109,7 @@ const Login = () => {
               type={passwordVisible ? "text" : "password"}
               id="password"
               className={`form-control ${darkMode ? 'bg-dark text-light border-secondary' : ''}`}
-              placeholder="Password"
+              placeholder={t('login.placeholderPassword')}
               {...register("password", {
                 value: password,
                 onChange: (e) => setPassword(e.target.value),
@@ -128,7 +134,7 @@ const Login = () => {
             className={`cssbuttons-io-button ${darkMode ? 'dark-mode-button' : ''}`}
             onClick={submitForm(handleSubmit)}
           >
-            Login
+            {t('common.login')}
             <div className="icon">
               <svg
                 height="24"
@@ -146,9 +152,9 @@ const Login = () => {
           </button>
           <span className="error small">{faild}</span>
           <div className="create-account">
-          <button className={`tag-button right ${darkMode ? 'text-light' : 'text-dark'}`} onClick={handelForgot}>Forgot password?</button>
+          <button className={`tag-button right ${darkMode ? 'text-light' : 'text-dark'}`} onClick={handelForgot}>{t('login.forgotPassword')}</button>
           <br/>
-            <button className={`tag-button ${darkMode ? 'text-light' : 'text-dark'}`} onClick={()=>navigate('/register')}>Create an account?</button>
+            <button className={`tag-button ${darkMode ? 'text-light' : 'text-dark'}`} onClick={()=>navigate('/register')}>{t('login.createAccount')}</button>
           </div>
         </div>
       </form>

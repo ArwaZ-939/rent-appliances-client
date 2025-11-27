@@ -3,8 +3,10 @@ import "../css/Admin.css";
 import axios from "axios";
 import { Modal, ModalHeader, ModalBody, Spinner, Input, Button } from "reactstrap";
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const CustomerChat = () => {
+  const { t, i18n } = useTranslation();
   const [chatMessages, setChatMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
@@ -50,7 +52,7 @@ const CustomerChat = () => {
       setLoading(false);
     } catch (error) {
       console.error('Error fetching chat messages:', error);
-      setDialogMessage('Failed to load chat messages');
+      setDialogMessage(t('customerChat.failedToLoad'));
         setShowDialog(true);
       setLoading(false);
     }
@@ -87,13 +89,13 @@ const CustomerChat = () => {
     e.preventDefault();
     
     if (!replyMessage.trim()) {
-      setDialogMessage('Please enter a message');
+      setDialogMessage(t('customerChat.pleaseEnterMessage'));
       setShowDialog(true);
       return;
     }
     
     if (!selectedUser) {
-      setDialogMessage('Please select a user to reply to');
+      setDialogMessage(t('customerChat.pleaseSelectUser'));
       setShowDialog(true);
       return;
     }
@@ -112,7 +114,7 @@ const CustomerChat = () => {
       await fetchChatMessages();
     } catch (error) {
       console.error('Error sending reply:', error);
-      setDialogMessage(`Failed to send reply: ${error.response?.data?.message || error.message}`);
+      setDialogMessage(`${t('customerChat.failedToSend')}: ${error.response?.data?.message || error.message}`);
       setShowDialog(true);
     }
   };
@@ -133,11 +135,12 @@ const CustomerChat = () => {
     yesterday.setDate(yesterday.getDate() - 1);
 
     if (date.toDateString() === today.toDateString()) {
-      return 'Today';
+      return t('common.today');
     } else if (date.toDateString() === yesterday.toDateString()) {
-      return 'Yesterday';
+      return t('common.yesterday');
     } else {
-      return date.toLocaleDateString('en-US', { 
+      const locale = i18n.language === 'ar' ? 'ar-SA' : 'en-US';
+      return date.toLocaleDateString(locale, { 
         month: 'short', 
         day: 'numeric',
         year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined
@@ -158,22 +161,22 @@ const CustomerChat = () => {
       <div className="sidebar">
         <div className="profile text-center mb-4">
           <img src={Profiler ? Profiler : dfimg} alt="Profile" className="rounded-circle mb-2" />
-          <p className="user-role">Admin</p>
-          <p>{user.gender === 'Male' ? 'Mr.' : 'Ms.'} {user.user}</p>
+          <p className="user-role">{t('common.admin')}</p>
+          <p>{user.gender === 'Male' ? t('profile.mr') : t('profile.ms')} {user.user}</p>
          <br/>
          &nbsp;
          <br/>
         </div>
         <ul className="menu">
-          <li onClick={handleAddAppliances} className="menu-item bi bi-list-task">&nbsp;Add Appliance</li>
-          <li onClick={handleDeleteAppliances} className="menu-item bi bi-trash">&nbsp;Delete Appliance</li>
-          <li onClick={handleUpdateAppliances} className="menu-item bi bi-pencil-square">&nbsp;Update Appliance</li>
-          <li onClick={handleCustomerControl} className="menu-item bi bi-person-lines-fill">&nbsp; Customer Control</li>
-          <li onClick={handleCustomerFeedback} className="menu-item bi bi-person-lines-fill">&nbsp; Customer Feedback</li>
-          <li onClick={handleCustomerChat} className="menu-item bi bi-person-lines-fill">&nbsp; Customer Chat</li>
+          <li onClick={handleAddAppliances} className="menu-item bi bi-list-task">&nbsp;{t('admin.addAppliance')}</li>
+          <li onClick={handleDeleteAppliances} className="menu-item bi bi-trash">&nbsp;{t('admin.deleteAppliance')}</li>
+          <li onClick={handleUpdateAppliances} className="menu-item bi bi-pencil-square">&nbsp;{t('admin.updateAppliance')}</li>
+          <li onClick={handleCustomerControl} className="menu-item bi bi-person-lines-fill">&nbsp; {t('admin.customerControl')}</li>
+          <li onClick={handleCustomerFeedback} className="menu-item bi bi-person-lines-fill">&nbsp; {t('admin.customerFeedback')}</li>
+          <li onClick={handleCustomerChat} className="menu-item bi bi-person-lines-fill">&nbsp; {t('admin.customerChat')}</li>
         </ul>
         <ul className="menu fixed-bottom p-4">
-          <li onClick={handleSignOut} className="menu-item bi bi-box-arrow-right">&nbsp;Sign Out</li>
+          <li onClick={handleSignOut} className="menu-item bi bi-box-arrow-right">&nbsp;{t('admin.signOut')}</li>
         </ul>
       </div>
 
@@ -206,10 +209,10 @@ const CustomerChat = () => {
             <div>
               <h2 style={{ margin: 0, fontSize: '28px', fontWeight: '700', color: '#1a1a1a' }}>
                 <i className="bi bi-chat-dots-fill me-3" style={{ color: '#7B4F2C' }}></i>
-                Customer Messages
+                {t('customerChat.title')}
               </h2>
               <p style={{ margin: '5px 0 0 0', color: '#6c757d', fontSize: '14px' }}>
-                View and manage customer chat messages
+                {t('customerChat.subtitle')}
               </p>
             </div>
             <div style={{
@@ -238,7 +241,7 @@ const CustomerChat = () => {
                 <div style={{ position: 'relative' }}>
                   <input
                     type="text"
-                    placeholder="Search users..."
+                    placeholder={t('customerChat.searchUsers')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     style={{
@@ -406,7 +409,7 @@ const CustomerChat = () => {
                     {usersWithMessages.filter(user => user.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
                       <div style={{ textAlign: 'center', padding: '40px', color: '#6c757d' }}>
                         <i className="bi bi-inbox" style={{ fontSize: '48px', display: 'block', marginBottom: '15px', opacity: 0.5 }}></i>
-                        <p>No chats found</p>
+                        <p>{t('customerChat.noChatsFound')}</p>
                       </div>
                     )}
                   </>
@@ -449,7 +452,7 @@ const CustomerChat = () => {
                         {readChats.has(selectedUser) && (
                           <span style={{ fontSize: '13px', color: '#28a745', display: 'flex', alignItems: 'center', gap: '5px' }}>
                             <i className="bi bi-check-circle-fill"></i>
-                            Read
+                            {t('common.read')}
                           </span>
                         )}
                       </div>
@@ -550,7 +553,7 @@ const CustomerChat = () => {
                       type="text"
                       value={replyMessage}
                       onChange={(e) => setReplyMessage(e.target.value)}
-                      placeholder={`Type your reply to ${selectedUser}...`}
+                      placeholder={t('customerChat.typeReply', { user: selectedUser })}
                       style={{
                         flex: 1,
                         padding: '12px 18px',
@@ -600,7 +603,7 @@ const CustomerChat = () => {
                       }}
                     >
                       <i className="bi bi-send-fill"></i>
-                      Send
+                      {t('common.send')}
                     </Button>
                   </form>
                 </>
@@ -614,8 +617,8 @@ const CustomerChat = () => {
                   color: '#6c757d'
                 }}>
                   <i className="bi bi-chat-left-text" style={{ fontSize: '80px', display: 'block', marginBottom: '20px', opacity: 0.3 }}></i>
-                  <h3 style={{ color: '#1a1a1a', marginBottom: '10px' }}>Select a user to view messages</h3>
-                  <p style={{ fontSize: '14px' }}>Choose a customer from the list to see their chat history</p>
+                  <h3 style={{ color: '#1a1a1a', marginBottom: '10px' }}>{t('customerChat.selectUserToView')}</h3>
+                  <p style={{ fontSize: '14px' }}>{t('customerChat.selectUserDescription')}</p>
                 </div>
               )}
             </div>
@@ -637,7 +640,7 @@ const CustomerChat = () => {
       `}</style>
 
       <Modal isOpen={showDialog} toggle={() => setShowDialog(false)}>
-        <ModalHeader toggle={() => setShowDialog(false)}>Message</ModalHeader>
+        <ModalHeader toggle={() => setShowDialog(false)}>{t('customerChat.message')}</ModalHeader>
         <ModalBody>
           <p>{dialogMessage}</p>
         </ModalBody>
