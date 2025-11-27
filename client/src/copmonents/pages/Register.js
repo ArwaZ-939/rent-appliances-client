@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import "../css/Register.css";
 import register1 from "../assets/register1.jpg";
 import { useNavigate } from "react-router-dom";
@@ -12,12 +12,7 @@ import female from "../assets/female.png";
 const Register = () => {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [cpasswordVisible, setCPasswordVisible] = useState(false);
-  const [checkboxError, setCheckboxError] = useState("");
-  const [name, setname] = useState("");
-  const [email, setemail] = useState("");
-  const [password, setpassword] = useState("");
-  const [imgUrl, setImgUrl] = useState("");
-  const [gender, setGender] = useState("");
+  const [usernameAvailable, setUsernameAvailable] = useState(true);
   const [message, setMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [showPolicyModal, setShowPolicyModal] = useState(false);
@@ -32,25 +27,46 @@ const Register = () => {
     setCPasswordVisible(!cpasswordVisible);
   };
 
-  const handleSubmit = async (data) => {
-    const user = {
-      user: name.toLocaleLowerCase(),
-      password: password,
-      email: email,
-      gender: gender,
-      imgUrl: imgUrl,
-    };
+  const checkUsernameAvailability = async (username) => {
+    if (username.length < 3) {
+      setUsernameAvailable(true);
+      return;
+    }
+    
     try {
-      const response = await axios.post("http://localhost:5000/addUser", user);
-      setMessage("User added successfully.");
-      navigate("/login");
+      const response = await axios.get(`http://localhost:5000/checkUsername/${username}`);
+      setUsernameAvailable(!response.data.exists);
+    } catch (error) {
+      console.error("Error checking username:", error);
+      setUsernameAvailable(true);
+    }
+  };
+
+  const handleSubmit = async (data) => {
+    const userData = {
+      user: data.username.toLowerCase(),
+      password: data.password,
+      email: data.email,
+      gender: data.gender,
+      imgUrl: data.ProfileUrl || "",
+    };
+    
+    try {
+      const response = await axios.post("http://localhost:5000/addUser", userData);
+      setMessage("Registration successful! Redirecting to login...");
+      
+      // Redirect to login after successful registration
+      setTimeout(() => {
+        navigate("/login");
+      }, 1000);
+      
     } catch (error) {
       if (error.response?.data?.message === "User already exists.") {
-        setMessage("User already exists.");
+        setMessage("Username already exists. Please choose a different username.");
       } else if (error.response?.data?.message === "Email already exists.") {
-        setMessage("Email already exists.");
+        setMessage("Email address already exists. Please use a different email.");
       } else {
-        setMessage("Registration failed.");
+        setMessage("Registration failed. Please try again.");
       }
       setShowModal(true);
     }
@@ -60,32 +76,28 @@ const Register = () => {
     register,
     handleSubmit: submitForm,
     formState: { errors },
+    watch
   } = useForm({
     resolver: yupResolver(ValidationRegister),
+    mode: "onChange",
   });
 
-  useEffect(() => {
-    if (errors.checkbox) {
-      setCheckboxError(errors.checkbox.message);
-      setShowModal(true);
-    } else {
-      setCheckboxError("");
-    }
-  }, [errors]);
+  const handlePolicyClick = (e) => {
+    e.preventDefault();
+    setShowPolicyModal(true);
+  };
 
   return (
-    <form className="container-register">
+    <form className="container-register" onSubmit={submitForm(handleSubmit)}>
       <div className="left-section">
         <h2 className="signip">Sign up for a new account</h2>
+        
+        {/* Username Field */}
         <span className="error small">{errors.username?.message}</span>
         <div className="input-group">
           <div className="input-group-prepend">
             <span className="input-group-text">
-              {errors.username ? (
-                <i className="bi bi-person-fill icon-error"></i>
-              ) : (
-                <i className="bi bi-person-fill"></i>
-              )}
+              <i className="bi bi-person-fill"></i>
             </span>
           </div>
           <input
@@ -93,11 +105,18 @@ const Register = () => {
             className="form-control"
             placeholder="Username"
             {...register("username", {
-              value: name,
-              onChange: (e) => setname(e.target.value),
+              onChange: (e) => checkUsernameAvailability(e.target.value)
             })}
-            />
+            onBlur={(e) => checkUsernameAvailability(e.target.value)}
+          />
         </div>
+        {/* {watch("username") && watch("username").length > 2 && (
+          <span className={`small ${usernameAvailable ? 'text-success' : 'text-danger'}`}>
+            {usernameAvailable ? '✓ Username available' : '✗ Username already taken'}
+          </span>
+        )} */}
+
+        {/* Profile URL Field */}
         <span className="error small">{errors.ProfileUrl?.message}</span>
         <div className="input-group">
           <div className="input-group-prepend">
@@ -109,100 +128,75 @@ const Register = () => {
             type="text"
             className="form-control"
             placeholder="Profile Image Url (Optional)"
-            {...register("ProfileUrl", {
-              value: imgUrl,
-              onChange: (e) => setImgUrl(e.target.value),
-            })}
-            />
+            {...register("ProfileUrl")}
+          />
         </div>
+
+        {/* Email Field */}
         <span className="error small">{errors.email?.message}</span>
         <div className="input-group">
           <div className="input-group-prepend">
             <span className="input-group-text">
-              {errors.email ? (
-                <i className="bi bi-envelope-fill icon-error"></i>
-              ) : (
-                <i className="bi bi-envelope-fill"></i>
-              )}
+              <i className="bi bi-envelope-fill"></i>
             </span>
           </div>
           <input
             type="email"
             className="form-control"
             placeholder="Your Email"
-            {...register("email", {
-              value: email,
-              onChange: (e) => setemail(e.target.value),
-            })}
-            />
+            {...register("email")}
+          />
         </div>
+
+        {/* Gender Field */}
         <span className="error small">{errors.gender?.message}</span>
         <div className="input-group">
-      <div className="radio-input">
-        <label>
-          <input
-            type="radio"
-            value="Male"
-            {...register("gender", {
-              onChange: (e) => setGender(e.target.value),
-            })}
-            />
-          <img className="rounded-circle" src={male} alt="male" height="18px" color="#7B4F2C"/>
-          &nbsp;&nbsp;Male
-        </label>
-        <label>
-          <input
-            type="radio"
-            value="Female"
-            {...register("gender", {
-              onChange: (e) => setGender(e.target.value),
-            })}
-            />
-          <img className="rounded-circle" src={female} alt="female" height="18px" />
-          &nbsp;&nbsp;Female
-        </label>
-        <span className="selection"></span>
-      </div>
-    </div>
+          <div className="radio-input">
+            <label>
+              <input type="radio" value="Male" {...register("gender")} />
+              <img className="rounded-circle" src={male} alt="male" height="18px" />
+              &nbsp;&nbsp;Male
+            </label>
+            <label>
+              <input type="radio" value="Female" {...register("gender")} />
+              <img className="rounded-circle" src={female} alt="female" height="18px" />
+              &nbsp;&nbsp;Female
+            </label>
+            <span className="selection"></span>
+          </div>
+        </div>
+
+        {/* Password Field */}
         <span className="error small">{errors.password?.message}</span>
         <div className="input-group">
           <div className="input-group-prepend">
             <span className="input-group-text">
-              {errors.password ? (
-                <i className="bi bi-shield-lock-fill icon-error"></i>
-              ) : (
-                <i className="bi bi-shield-lock-fill"></i>
-              )}
+              <i className="bi bi-shield-lock-fill"></i>
             </span>
           </div>
           <input
             type={passwordVisible ? "text" : "password"}
             className="form-control"
             placeholder="Password"
-            {...register("password", {
-              value: password,
-              onChange: (e) => setpassword(e.target.value),
-            })}
-            />
+            {...register("password")}
+          />
           <div className="input-group-append">
             <button
               className="btn btn-outline-secondary"
               type="button"
               onClick={togglePasswordVisibility}
-              >
+            >
               <i className={passwordVisible ? "bi bi-eye" : "bi bi-eye-slash"}></i>
             </button>
           </div>
         </div>
+
+        {/* Confirm Password Field */}
         <span className="error small">{errors.conPassword?.message}</span>
         <div className="input-group">
           <div className="input-group-prepend">
             <span className="input-group-text">
-              {errors.conPassword ? (
-                <i className="bi bi-shield-lock-fill icon-error"></i>
-              ) : (
-                <i className="bi bi-shield-lock-fill"></i>
-              )}
+              <i className="bi bi-shield-lock-fill"></i>
             </span>
           </div>
           <input
@@ -210,31 +204,28 @@ const Register = () => {
             className="form-control"
             placeholder="Repeat your password"
             {...register("conPassword")}
-            />
+          />
           <div className="input-group-append">
             <button
               className="btn btn-outline-secondary"
               type="button"
               onClick={toggleCPasswordVisibility}
-              >
+            >
               <i className={cpasswordVisible ? "bi bi-eye" : "bi bi-eye-slash"}></i>
             </button>
           </div>
         </div>
         
-        {/* Return Policy Section */}
+        {/* Policy Agreement */}
         <div className="policy-section">
           <div className="policy-agreement">
             <label className="policy-checkbox">
-              <input
-                type="checkbox"
-                {...register("policyAgreement")}
-              />
+              <input type="checkbox" {...register("policyAgreement")} />
               <span className="checkmark"></span>
               I agree to the <button 
                 type="button" 
                 className="policy-link" 
-                onClick={() => setShowPolicyModal(true)}
+                onClick={handlePolicyClick}
               >
                 Return Policy
               </button>
@@ -244,27 +235,53 @@ const Register = () => {
         </div>
         
         <br />
-        <button type="button" className="cssbuttons-io-button" color="#7B4F2C" onClick={submitForm(handleSubmit)}>
+        <button type="submit" className="cssbuttons-io-button">
           Register
           <div className="icon">
-            <svg height="24" width="24" viewBox="0 0 24 24" >
-              <path d="M0 0h24v24H0z" fill="none" ></path>
-              <path
-                d="M16.172 11l-5.364-5.364 1.414-1.414L20 12l-7.778 7.778-1.414-1.414L16.172 13H4v-2z"
-                 color="#7B4F2C"
-                ></path>
+            <svg height="24" width="24" viewBox="0 0 24 24">
+              <path d="M0 0h24v24H0z" fill="none"></path>
+              <path d="M16.172 11l-5.364-5.364 1.414-1.414L20 12l-7.778 7.778-1.414-1.414L16.172 13H4v-2z"></path>
             </svg>
           </div>
         </button>
+        
         <div className="create-account">
-        <button className="tag-button" onClick={() => navigate("/login")}>I am already a member</button>
+          <button className="tag-button" onClick={() => navigate("/login")}>
+            I am already a member
+          </button>
         </div>
       </div>
+      
       <div className="right-section">
         <img src={register1} alt="Signup Illustration" />
       </div>
       
-      {/* Return Policy Modal */}
+      {/* Success/Error Modal */}
+      {showModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <div className="modal-icon">
+                <i className="bi bi-exclamation-triangle-fill"></i>
+              </div>
+              <div>
+                <div className="modal-title">Registration Status</div>
+              </div>
+            </div>
+            <div className="modal-body">
+              {message}
+            </div>
+            <button 
+              className="modal-close-button" 
+              onClick={() => setShowModal(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Policy Modal */}
       {showPolicyModal && (
         <div className="policy-modal-overlay">
           <div className="policy-modal">
@@ -286,18 +303,14 @@ const Register = () => {
               
               <h5>3. Return Process:</h5>
               <p><strong>Contact our support team at "RentingHA3@gmail.com" or call us at "98939395".</strong> A pickup will be scheduled within 3 business hours.</p>
-              <ul>
-                <li>The device will be inspected and approved.</li>
-                <li>If the customer wants to return the device before the expiry of the period, an amount will be returned (to be agreed upon by the customer and the renter).</li>
-              </ul>
               
               <h5>4. Late Return Penalty:</h5>
               <p>Returns made after the agreed rental period may incur additional charges unless an extension was pre-approved.</p>
               
-              <h5>5. The admin can block the user if he violates these policies twice.</h5>
-              <p>When you register, this indicates that you agree to these policies.</p>
+              <h5>5. Policy Violations</h5>
+              <p>The admin can block the user if he violates these policies twice.</p>
               
-              <h5>6. Return Policy</h5>
+              <h5>6. Device Collection</h5>
               <p>Upon the expiry of the agreed-upon period, the renter will be contacted to arrange a convenient time for the device to be collected.</p>
               <p>When you register, this indicates that you agree to these policies.</p>
             </div>
@@ -312,7 +325,6 @@ const Register = () => {
           </div>
         </div>
       )}
-      
     </form>
   );
 };
