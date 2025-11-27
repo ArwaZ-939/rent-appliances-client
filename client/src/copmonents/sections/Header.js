@@ -20,6 +20,23 @@ const Header = () => {
   });
   const navigate = useNavigate();
 
+  // Load notification preferences from localStorage on component mount
+  useEffect(() => {
+    const savedPreferences = localStorage.getItem('notificationPreferences');
+    if (savedPreferences) {
+      try {
+        const preferences = JSON.parse(savedPreferences);
+        setNotificationPreferences({
+          email: preferences.email || false,
+          sms: preferences.sms || false
+        });
+        setPhoneNumber(preferences.phoneNumber || '');
+      } catch (error) {
+        console.error('Error parsing saved preferences:', error);
+      }
+    }
+  }, []);
+
   const fetchUserData = async () => {
     const username = localStorage.getItem('username');
     if (username) {
@@ -157,12 +174,17 @@ const Header = () => {
       }
     }
     
-    // If validation passes, save preferences
-    console.log('Notification preferences:', notificationPreferences);
-    console.log('Phone number:', phoneNumber);
+    // Save to localStorage
+    const preferencesToSave = {
+      email: notificationPreferences.email,
+      sms: notificationPreferences.sms,
+      phoneNumber: notificationPreferences.sms ? phoneNumber : '',
+      savedAt: new Date().toISOString()
+    };
     
-    // You can add API call here to save preferences to your backend
-    // For now, we'll just close the modal and show an alert
+    localStorage.setItem('notificationPreferences', JSON.stringify(preferencesToSave));
+    
+    console.log('Notification preferences saved:', preferencesToSave);
     alert('Notification preferences saved successfully!');
     setNotificationModal(false);
     setPhoneError('');

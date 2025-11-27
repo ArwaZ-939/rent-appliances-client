@@ -25,6 +25,8 @@ const RentalBooking = () => {
   const [agreedToTerms, setAgreedToTerms] = useState(false); // Track if user agreed to insurance deposit terms
   const [rentalPeriod, setRentalPeriod] = useState('days'); // 'days' or 'weeks'
   const [phoneNumber, setPhoneNumber] = useState(''); // Oman phone number
+  const [startDate, setStartDate] = useState(''); // Rental start date
+  const [calculatedEndDate, setCalculatedEndDate] = useState(''); // Calculated rental end date
 
 
   // Effect hook to initialize component state when component mounts or location.state changes
@@ -50,6 +52,50 @@ const RentalBooking = () => {
     }
     setTotalAmount(calculatedAmount); // Update state with new calculated amount
   }, [days, pricePerDay, rentalPeriod]); // Dependency array - effect runs when days, pricePerDay or rentalPeriod changes
+
+
+  // Calculate end date when start date or rental duration changes
+  useEffect(() => {
+    if (startDate && days) {
+      const start = new Date(startDate);
+      const end = new Date(start);
+      
+      if (rentalPeriod === 'weeks') {
+        end.setDate(start.getDate() + (days * 7));
+      } else {
+        end.setDate(start.getDate() + days);
+      }
+
+      setCalculatedEndDate(end.toISOString().split('T')[0]);
+    }
+  }, [startDate, days, rentalPeriod]);
+
+
+  // Utility function to get today's date in YYYY-MM-DD format
+  const getTodayDate = () => {
+    return new Date().toISOString().split('T')[0];
+  };
+
+
+  // Utility function to get maximum date (1 year from now)
+  const getMaxDate = () => {
+    const oneYearFromNow = new Date();
+    oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+    return oneYearFromNow.toISOString().split('T')[0];
+  };
+
+
+  // Format date for display
+  const formatDisplayDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
 
 
   // Event handler for rental duration input changes
@@ -86,6 +132,12 @@ const RentalBooking = () => {
   };
 
 
+  // Event handler for start date changes
+  const handleStartDateChange = (e) => {
+    setStartDate(e.target.value);
+  };
+
+
   // Event handler for insurance terms agreement checkbox
   // Handle checkbox change for terms agreement
   const handleAgreementChange = (e) => {
@@ -104,6 +156,12 @@ const RentalBooking = () => {
       return;
     }
 
+    // Validate start date
+    if (!startDate) {
+      alert('Please select a rental start date');
+      return;
+    }
+
     const finalAmount = totalAmount + 20; // Calculate final amount: rental total + 20 OMR insurance deposit
 
     // Navigate to payment page with all necessary data as route state
@@ -113,7 +171,9 @@ const RentalBooking = () => {
         finalAmount, // Include final amount with insurance deposit added
         appliance, // Pass appliance details for order summary
         days, // Pass rental duration for order processing
-        rentalPeriod // Pass rental period type (days/weeks)
+        rentalPeriod, // Pass rental period type (days/weeks)
+        startDate, // Pass rental start date
+        endDate: calculatedEndDate // Pass calculated end date
       }
     });
   };
@@ -219,6 +279,28 @@ const RentalBooking = () => {
                 <p style={{ margin: '0 0 10px 0', fontSize: '14px' }}>
                   <strong>Rental Period:</strong> {days} {rentalPeriod} ({rentalPeriod === 'weeks' ? days * 7 : days} days)
                 </p>
+                
+                {/* Rental dates display */}
+                {startDate && calculatedEndDate && (
+                  <div style={{
+                    margin: '10px 0',
+                    padding: '10px',
+                    backgroundColor: '#d4edda',
+                    borderRadius: '5px',
+                    borderLeft: '4px solid #28a745'
+                  }}>
+                    <p style={{ margin: '4px 0', fontSize: '14px', fontWeight: 'bold', color: '#155724' }}>
+                      Rental Dates:
+                    </p>
+                    <p style={{ margin: '2px 0', fontSize: '13px' }}>
+                      <strong>Start:</strong> {formatDisplayDate(startDate)}
+                    </p>
+                    <p style={{ margin: '2px 0', fontSize: '13px' }}>
+                      <strong>End:</strong> {formatDisplayDate(calculatedEndDate)}
+                    </p>
+                  </div>
+                )}
+                
                 {/* Rental amount line */}
                 <h4 style={{ color: '#7B4F2C', margin: '0 0 5px 0' }}>
                   Rental Amount: {totalAmount} OMR
@@ -303,6 +385,51 @@ const RentalBooking = () => {
                   </div>
                 </div>
 
+                {/* Rental Start Date input */}
+                <div className="form-group">
+                  <label htmlFor="startDate" style={{ fontWeight: '600', marginBottom: '8px' }}>
+                    Rental Start Date <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    name="startDate"
+                    className="form-control"
+                    style={{
+                      padding: '12px',
+                      borderRadius: '8px',
+                      border: '2px solid #e9ecef',
+                      transition: 'all 0.3s ease',
+                      fontSize: '16px'
+                    }}
+                    id="startDate"
+                    value={startDate}
+                    onChange={handleStartDateChange}
+                    min={getTodayDate()}
+                    max={getMaxDate()}
+                    required
+                  />
+                  <small className="form-text text-muted" style={{ marginTop: '5px' }}>
+                    Select when you want the rental period to begin
+                  </small>
+                </div>
+
+                {/* Display calculated end date */}
+                {calculatedEndDate && (
+                  <div
+                    style={{
+                      backgroundColor: '#d4edda',
+                      padding: '12px',
+                      borderRadius: '8px',
+                      marginBottom: '15px',
+                      border: '1px solid #c3e6cb',
+                      borderLeft: '4px solid #28a745',
+                    }}
+                  >
+                    <p style={{ margin: 0, color: '#155724', fontWeight: 'bold', fontSize: '14px' }}>
+                      📅 Your rental will end on: {formatDisplayDate(calculatedEndDate)}
+                    </p>
+                  </div>
+                )}
 
                 {/* Delivery location input */}
                 {/* Place of delivery input */}
@@ -380,10 +507,10 @@ const RentalBooking = () => {
                 <button
                   type="submit" // Button type for form submission
                   className="btn btn-submit" // CSS classes for styling
-                  disabled={!agreedToTerms || phoneNumber.length !== 8} // Disable button until terms are agreed and phone is valid
+                  disabled={!agreedToTerms || phoneNumber.length !== 8 || !startDate} // Disable button until terms are agreed, phone is valid, and start date is selected
                   style={{
-                    opacity: (agreedToTerms && phoneNumber.length === 8) ? 1 : 0.6, // Visual feedback for disabled state
-                    cursor: (agreedToTerms && phoneNumber.length === 8) ? 'pointer' : 'not-allowed' // Cursor feedback
+                    opacity: (agreedToTerms && phoneNumber.length === 8 && startDate) ? 1 : 0.6, // Visual feedback for disabled state
+                    cursor: (agreedToTerms && phoneNumber.length === 8 && startDate) ? 'pointer' : 'not-allowed' // Cursor feedback
                   }}
                 >
                   PROCEED TO PAYMENT {/* Button text */}
