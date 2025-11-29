@@ -15,9 +15,9 @@ const Help = () => {
           <h2 style={{ color: '#7B4F2C' }}>Return Policy</h2>
           <form>
           <div className="modal-body">
+                <></>
+                <h5>1. Return Window:</h5>
                 
-                <h5>1. Return Window:</h5>
-                <h5>1. Return Window:</h5>
                 <p>Rented appliances can be returned within 3 hours of delivery if they are defective, damaged, or not as described..</p>
                 
                 <h5>2. Condition of Return</h5>
