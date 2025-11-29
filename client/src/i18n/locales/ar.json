@@ -1,0 +1,100 @@
+{
+  "common": {
+    "home": "الرئيسية",
+    "contact": "اتصل بنا",
+    "more": "المزيد",
+    "signOut": "تسجيل الخروج",
+    "admin": "المسؤول",
+    "login": "تسجيل الدخول",
+    "register": "إنشاء حساب",
+    "password": "كلمة المرور",
+    "username": "اسم المستخدم",
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "send": "إرسال",
+    "search": "بحث",
+    "loading": "جاري التحميل...",
+    "error": "خطأ",
+    "success": "نجح",
+    "today": "اليوم",
+    "yesterday": "أمس",
+    "read": "مقروء",
+    "select": "اختر",
+    "options": "الخيارات"
+  },
+  "login": {
+    "title": "تسجيل الدخول إلى حسابك",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "createAccount": "إنشاء حساب؟",
+    "invalidCredentials": "اسم المستخدم أو كلمة المرور غير صحيحة !!",
+    "placeholderUsername": "اسم المستخدم",
+    "placeholderPassword": "كلمة المرور"
+  },
+  "header": {
+    "home": "الرئيسية",
+    "contactUs": "اتصل بنا",
+    "more": "المزيد",
+    "feedbackAndRating": "التعليقات والتقييم",
+    "smartRecommendation": "التوصية الذكية",
+    "notifications": "الإشعارات",
+    "help": "المساعدة",
+    "signOut": "تسجيل الخروج",
+    "switchToLightMode": "التبديل إلى الوضع الفاتح",
+    "switchToDarkMode": "التبديل إلى الوضع الداكن"
+  },
+  "notifications": {
+    "title": "إعدادات الإشعارات",
+    "emailNotifications": "تلقي الإشعارات عبر البريد الإلكتروني",
+    "smsNotifications": "تلقي الإشعارات عبر الرسائل النصية",
+    "phoneNumber": "رقم الهاتف العماني",
+    "phonePlaceholder": "أدخل رقم هاتفك العماني (مثل: 91234567)",
+    "phoneRequired": "رقم الهاتف مطلوب للإشعارات النصية",
+    "phoneInvalid": "يجب أن يكون رقم الهاتف 8 أرقام بالضبط",
+    "phoneStartError": "يجب أن يبدأ رقم الهاتف العماني بـ 7 أو 9",
+    "phoneFormat": "يجب أن يكون رقم الهاتف العماني 8 أرقام ويبدأ بـ 7 أو 9 (مثل: 91234567 أو 71234567)",
+    "notificationsTo": "سيتم إرسال الإشعارات إلى",
+    "yourRegisteredEmail": "بريدك الإلكتروني المسجل",
+    "savePreferences": "حفظ التفضيلات",
+    "savedSuccessfully": "تم حفظ تفضيلات الإشعارات بنجاح!"
+  },
+  "footer": {
+    "title": "تأجير الأجهزة المنزلية",
+    "admins": "المسؤولون",
+    "references": "المراجع",
+    "media": "وسائل التواصل",
+    "contact": "اتصل بنا",
+    "copyright": "© 2025 حقوق النشر: تأجير الأجهزة المنزلية"
+  },
+  "home": {
+    "title": "تأجير الأجهزة المنزلية"
+  },
+  "customerChat": {
+    "title": "رسائل العملاء",
+    "subtitle": "عرض وإدارة رسائل الدردشة مع العملاء",
+    "searchUsers": "بحث عن المستخدمين...",
+    "noChatsFound": "لم يتم العثور على محادثات",
+    "selectUserToView": "اختر مستخدمًا لعرض الرسائل",
+    "selectUserDescription": "اختر عميلاً من القائمة لرؤية سجل المحادثة",
+    "typeReply": "اكتب ردك على {{user}}...",
+    "send": "إرسال",
+    "pleaseEnterMessage": "الرجاء إدخال رسالة",
+    "pleaseSelectUser": "الرجاء اختيار مستخدم للرد عليه",
+    "failedToLoad": "فشل تحميل رسائل الدردشة",
+    "failedToSend": "فشل إرسال الرد",
+    "message": "رسالة"
+  },
+  "admin": {
+    "addAppliance": "إضافة جهاز",
+    "deleteAppliance": "حذف جهاز",
+    "updateAppliance": "تحديث جهاز",
+    "customerControl": "التحكم بالعملاء",
+    "customerFeedback": "تعليقات العملاء",
+    "customerChat": "دردشة العملاء",
+    "signOut": "تسجيل الخروج"
+  },
+  "profile": {
+    "mr": "السيد",
+    "ms": "السيدة"
+  }
+}
+

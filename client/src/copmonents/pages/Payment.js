@@ -25,7 +25,7 @@ const Payment = () => {
 
   // Destructure and retrieve state passed from RentalBooking component
   // Get the passed state from RentalBooking with fallback empty object
-  const { totalAmount, finalAmount, appliance, days, rentalPeriod } = location.state || {};
+  const { totalAmount, finalAmount, appliance, days, rentalPeriod, startDate, endDate } = location.state || {};
 
 
   // State management for form data and user inputs
@@ -36,14 +36,13 @@ const Payment = () => {
     cardNumber: '', // Credit/debit card number with formatting
     expiryDate: '', // Card expiry date in MM/YY format
     cvv: '', // Card security code
-    startDate: '', // Rental start date
-    endDate: '' // Calculated rental end date
   });
 
   // State for validation errors
   const [errors, setErrors] = useState({
     cardNumber: '',
-    cvv: ''
+    cvv: '',
+    expiryDate: ''
   });
 
 
@@ -51,10 +50,6 @@ const Payment = () => {
   // State for animations - manages loading states and visual feedback
   const [isLoading, setIsLoading] = useState(false); // Tracks if payment is being processed
   const [fieldFocus, setFieldFocus] = useState(''); // Tracks which form field has focus for styling
-
-
-  // State for calculated dates - manages rental period calculations
-  const [calculatedEndDate, setCalculatedEndDate] = useState(''); // Stores calculated end date based on start date and duration
 
 
   // State to track if elements should be animated - controls scroll-triggered animations
@@ -102,32 +97,6 @@ const Payment = () => {
   }, []); // Empty dependency array - effect runs only once on mount
 
 
-  // Calculate end date when start date or rental duration changes
-  // Calculate end date when start date or days change
-  useEffect(() => {
-    // Only calculate if start date and rental duration are available
-    if (formData.startDate && days) {
-      const startDate = new Date(formData.startDate); // Parse start date
-      const endDate = new Date(startDate); // Create end date from start date
-
-      // Calculate end date based on rental period type
-      if (rentalPeriod === 'weeks') {
-        endDate.setDate(startDate.getDate() + (days * 7)); // Add weeks converted to days
-      } else {
-        endDate.setDate(startDate.getDate() + days); // Add days directly
-      }
-
-      setCalculatedEndDate(endDate.toISOString().split('T')[0]); // Store calculated end date
-
-      // Update form data with calculated end date
-      setFormData(prev => ({
-        ...prev,
-        endDate: endDate.toISOString().split('T')[0] // Store in YYYY-MM-DD format
-      }));
-    }
-  }, [formData.startDate, days, rentalPeriod]); // Dependency array - effect runs when start date, days, or rentalPeriod change
-
-
   // Generic input change handler for form fields
   // Handle input changes
   const handleInputChange = (e) => {
@@ -142,6 +111,9 @@ const Payment = () => {
     if (name === 'cvv' && errors.cvv) {
       setErrors(prev => ({ ...prev, cvv: '' }));
     }
+    if (name === 'expiryDate' && errors.expiryDate) {
+      setErrors(prev => ({ ...prev, expiryDate: '' }));
+    }
   };
 
 
@@ -155,6 +127,9 @@ const Payment = () => {
     }
     if (fieldName === 'cvv') {
       setErrors(prev => ({ ...prev, cvv: '' }));
+    }
+    if (fieldName === 'expiryDate') {
+      setErrors(prev => ({ ...prev, expiryDate: '' }));
     }
   };
 
@@ -228,35 +203,47 @@ const Payment = () => {
   };
 
 
-  // Specialized handler for expiry date input with auto-formatting
-  // Handle expiry date formatting
+  // Specialized handler for expiry date input with auto-formatting and validation
+  // Handle expiry date formatting with validation
   const handleExpiryDateChange = (e) => {
     let value = e.target.value.replace(/\D/g, ''); // Remove non-digit characters
+    
     // Format as MM/YY after user enters 2 digits
     if (value.length >= 2) {
       value = value.substring(0, 2) + '/' + value.substring(2, 4);
     }
+    
     // Update form data with formatted expiry date
     setFormData(prev => ({
       ...prev,
       expiryDate: value
     }));
+
+    // Validate expiry date
+    validateExpiryDate(value);
   };
 
 
-  // Utility function to get today's date in YYYY-MM-DD format for date input min attribute
-  // Get today's date in YYYY-MM-DD format for min date
-  const getTodayDate = () => {
-    return new Date().toISOString().split('T')[0]; // Return current date in YYYY-MM-DD format
-  };
+  // Validate expiry date to ensure it's not in the past
+  const validateExpiryDate = (value) => {
+    if (value.length === 5) { // MM/YY format
+      const [month, year] = value.split('/').map(num => parseInt(num, 10));
+      const currentDate = new Date();
+      const currentYear = currentDate.getFullYear() % 100; // Get last 2 digits of year
+      const currentMonth = currentDate.getMonth() + 1; // Months are 0-indexed
 
+      let error = '';
+      
+      if (month < 1 || month > 12) {
+        error = 'Invalid month';
+      } else if (year < currentYear || (year === currentYear && month < currentMonth)) {
+        error = 'Card has expired';
+      }
 
-  // Utility function to get maximum date (1 year from now) for date input max attribute
-  // Get max date (1 year from now)
-  const getMaxDate = () => {
-    const oneYearFromNow = new Date(); // Create date object for current date
-    oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1); // Add 1 year
-    return oneYearFromNow.toISOString().split('T')[0]; // Return in YYYY-MM-DD format
+      setErrors(prev => ({ ...prev, expiryDate: error }));
+    } else {
+      setErrors(prev => ({ ...prev, expiryDate: '' }));
+    }
   };
 
 
@@ -295,6 +282,14 @@ const Payment = () => {
       }
     }
 
+    // Validate expiry date if payment method requires it
+    if ((formData.paymentMethod === 'credit' || formData.paymentMethod === 'debit') && formData.expiryDate) {
+      validateExpiryDate(formData.expiryDate);
+      if (errors.expiryDate) {
+        newErrors.expiryDate = errors.expiryDate;
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -328,8 +323,8 @@ const Payment = () => {
       days, // Rental duration
       rentalPeriod, // Rental period type (days/weeks)
       rentalPeriod: {
-        start: formData.startDate, // Rental start date
-        end: calculatedEndDate // Calculated rental end date
+        start: startDate, // Rental start date
+        end: endDate // Calculated rental end date
       }
     };
 
@@ -402,7 +397,7 @@ const Payment = () => {
 
                 {/* Conditional rendering - show rental period if dates are available */}
                 {/* Rental Period Display */}
-                {formData.startDate && calculatedEndDate && (
+                {startDate && endDate && (
                   <div style={{
                     margin: '15px 0',
                     padding: '12px',
@@ -412,13 +407,13 @@ const Payment = () => {
                   }}>
                     <p style={{ margin: '5px 0', fontWeight: 'bold', color: '#7B4F2C' }}>Rental Period:</p>
                     <p style={{ margin: '4px 0', fontSize: '14px' }}>
-                      <strong>Start:</strong> {formatDisplayDate(formData.startDate)}
+                      <strong>Start:</strong> {formatDisplayDate(startDate)}
                     </p>
                     <p style={{ margin: '4px 0', fontSize: '14px' }}>
-                      <strong>End:</strong> {formatDisplayDate(calculatedEndDate)}
+                      <strong>End:</strong> {formatDisplayDate(endDate)}
                     </p>
                     <p style={{ margin: '4px 0', fontSize: '12px', color: '#6c757d', fontStyle: 'italic' }}>
-                      Please return the item by end of day on {formatDisplayDate(calculatedEndDate)}
+                      Please return the item by end of day on {formatDisplayDate(endDate)}
                     </p>
                   </div>
                 )}
@@ -435,60 +430,6 @@ const Payment = () => {
 
             {/* Main payment form */}
             <form onSubmit={handleDelivery}>
-              {/* Rental Period Selection */}
-              <div className="form-group">
-                <label htmlFor="startDate" style={{ fontWeight: '600', marginBottom: '8px' }}>
-                  Rental Start Date <span className="text-danger">*</span>
-                </label>
-                <input
-                  type="date" // HTML5 date input
-                  name="startDate"
-                  className="form-control"
-                  style={{
-                    padding: '12px',
-                    borderRadius: '8px',
-                    border: '2px solid #e9ecef',
-                    transition: 'all 0.3s ease', // Smooth transition for focus
-                    fontSize: '16px'
-                  }}
-                  id="startDate"
-                  value={formData.startDate}
-                  onChange={handleInputChange}
-                  onFocus={() => handleFocus('startDate')} // Set focus state
-                  onBlur={handleBlur} // Clear focus state
-                  min={getTodayDate()} // Prevent past dates
-                  max={getMaxDate()} // Limit to 1 year in future
-                  required
-                />
-                <small className="form-text text-muted" style={{ marginTop: '5px' }}>
-                  Select when you want the rental period to begin
-                </small>
-              </div>
-
-
-              {/* Conditional rendering - show calculated end date when available */}
-              {/* Display calculated end date with animation */}
-              {calculatedEndDate && (
-                <div
-                  style={{
-                    backgroundColor: '#d4edda', // Success green background
-                    padding: '15px',
-                    borderRadius: '8px',
-                    marginBottom: '20px',
-                    border: '1px solid #c3e6cb',
-                    borderLeft: '4px solid #28a745', // Success green accent
-                    animation: 'scaleIn 0.5s ease-out' // Scale-in animation
-                  }}
-                >
-                  <p style={{ margin: 0, color: '#155724', fontWeight: 'bold', fontSize: '15px' }}>
-                    📅 Your rental will end on: {formatDisplayDate(calculatedEndDate)}
-                  </p>
-                  <p style={{ margin: '5px 0 0 0', color: '#155724', fontSize: '13px' }}>
-                    Please ensure the item is returned by this date to receive your full insurance deposit refund.
-                  </p>
-                </div>
-              )}
-
               {/* Email input field */}
               <div className="form-group">
                 <label htmlFor="email" style={{ fontWeight: '600', marginBottom: '8px' }}>
@@ -596,7 +537,7 @@ const Payment = () => {
 
 
                   <div className="row">
-                    {/* Expiry date input with auto-formatting */}
+                    {/* Expiry date input with auto-formatting and validation */}
                     <div className="form-group col-md-6">
                       <label htmlFor="expiryDate" style={{ fontWeight: '600', marginBottom: '8px' }}>
                         Expiry Date <span className="text-danger">*</span>
@@ -608,7 +549,7 @@ const Payment = () => {
                         style={{
                           padding: '12px',
                           borderRadius: '8px',
-                          border: `2px solid ${fieldFocus === 'expiryDate' ? '#7B4F2C' : '#e9ecef'}`,
+                          border: `2px solid ${errors.expiryDate ? '#dc3545' : fieldFocus === 'expiryDate' ? '#7B4F2C' : '#e9ecef'}`,
                           transition: 'all 0.3s ease',
                           fontSize: '16px',
                           boxShadow: fieldFocus === 'expiryDate' ? '0 0 0 3px rgba(123, 79, 44, 0.1)' : 'none'
@@ -616,12 +557,20 @@ const Payment = () => {
                         id="expiryDate"
                         placeholder="MM/YY"
                         value={formData.expiryDate}
-                        onChange={handleExpiryDateChange} // Specialized handler for formatting
+                        onChange={handleExpiryDateChange} // Specialized handler for formatting and validation
                         onFocus={() => handleFocus('expiryDate')}
                         onBlur={handleBlur}
                         maxLength="5" // Limit to MM/YY format
                         required
                       />
+                      {errors.expiryDate && (
+                        <div className="text-danger" style={{ fontSize: '14px', marginTop: '5px' }}>
+                          {errors.expiryDate}
+                        </div>
+                      )}
+                      <small className="form-text text-muted" style={{ marginTop: '5px' }}>
+                        Must be in MM/YY format and not expired
+                      </small>
                     </div>
                     {/* CVV security code input */}
                     <div className="form-group col-md-6">

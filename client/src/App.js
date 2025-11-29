@@ -18,10 +18,13 @@ import DeleteAppliances from './copmonents/pages/DeleteAppliances.js';
 import CustomerControl from './copmonents/pages/CustomerControl.js';
 import UpdateAppliances from './copmonents/pages/UpdateAppliances.js';
 import { DarkModeContext, DarkModeProvider } from './copmonents/sections/DarkModeContext.js';
+import { LanguageProvider } from './copmonents/sections/LanguageContext.js';
 import './App.css';
 import './copmonents/css/DarkMode.css';
+import './copmonents/css/RTL.css';
 import CustomerFeedback from './copmonents/pages/CustomerFeedback.js';
-
+import SmartRecom from './copmonents/pages/SmartRecom.js';
+import CustomerChat from './copmonents/pages/CustomerChat.js';
 
 
 
@@ -32,6 +35,7 @@ function App() {
   return (
     <div> 
 
+  <LanguageProvider>
   <DarkModeProvider>
   <BrowserRouter>
   <Routes>
@@ -54,6 +58,9 @@ function App() {
     <Route path='/update-appliances' element={<UpdateAppliances/>}/>
     <Route path='/customer-control' element={<CustomerControl/>}/>
     <Route path='/customer-feedback' element={<CustomerFeedback/>}/>
+    <Route path='/smart-recom' element={<SmartRecom/>}/>
+    <Route path='/customer-chat' element={<CustomerChat/>}/>
+    
 
 
 
@@ -67,6 +74,7 @@ function App() {
   
   </BrowserRouter>
   </DarkModeProvider>
+  </LanguageProvider>
 
   </div>
   );

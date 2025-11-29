@@ -4,6 +4,7 @@ import cors from "cors";
 import UserModel from "./Models/User.js";
 import ApplianceModel from "./Models/Appliance.js";
 import FeedbackModel from "./Models/Feedback.js";
+import OrderModel from "./Models/Order.js";
 import bcrypt from 'bcrypt';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
@@ -640,6 +641,82 @@ app.delete('/feedback/:id', async (req, res) => {
         res.status(200).json({ message: 'Feedback deleted successfully', feedback: deletedFeedback });
     } catch (error) {
         res.status(500).json({ message: 'Error deleting feedback', error: error.message });
+    }
+});
+
+// api for get orders by username
+app.get("/getUserOrders/:username", async (req, res) => {
+    try {
+        const { username } = req.params;
+        const orders = await OrderModel.find({ user: username }).sort({ createdAt: -1 });
+        return res.status(200).json(orders);
+    } catch (error) {
+        console.error("Error fetching user orders:", error);
+        return res.status(500).json({ message: "Internal server error." });
+    }
+});
+
+// api for get all orders
+app.get("/getAllOrders", async (req, res) => {
+    try {
+        const orders = await OrderModel.find({}).sort({ createdAt: -1 });
+        return res.status(200).json(orders);
+    } catch (error) {
+        console.error("Error fetching all orders:", error);
+        return res.status(500).json({ message: "Internal server error." });
+    }
+});
+
+// api to check if user has active orders (not returned)
+app.get("/checkActiveOrders/:username", async (req, res) => {
+    try {
+        const { username } = req.params;
+        const activeOrders = await OrderModel.find({ 
+            user: username,
+            status: { $in: ['pending', 'active'] }
+        });
+        return res.status(200).json({ 
+            hasActiveOrders: activeOrders.length > 0,
+            activeOrders: activeOrders 
+        });
+    } catch (error) {
+        console.error("Error checking active orders:", error);
+        return res.status(500).json({ message: "Internal server error." });
+    }
+});
+
+// api for create new order
+app.post("/addOrder", async (req, res) => {
+    try {
+        console.log("Received order request body:", req.body);
+        
+        // Validate required fields
+        if (!req.body.user || !req.body.email || !req.body.appliance) {
+            return res.status(400).json({ message: "User, email, and appliance are required." });
+        }
+        
+        const newOrder = new OrderModel({
+            user: req.body.user,
+            email: req.body.email,
+            appliance: req.body.appliance,
+            applianceId: req.body.applianceId || null,
+            startDate: req.body.startDate ? new Date(req.body.startDate) : new Date(),
+            endDate: req.body.endDate ? new Date(req.body.endDate) : new Date(),
+            totalAmount: req.body.totalAmount || 0,
+            status: req.body.status || 'pending',
+            deliveryAddress: req.body.deliveryAddress || {}
+        });
+        
+        console.log("Creating order:", newOrder);
+        await newOrder.save();
+        console.log("Order saved successfully");
+        return res.status(201).json({ message: "Order created successfully.", order: newOrder });
+    } catch (error) {
+        console.error("Error saving order:", error);
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({ message: "Validation error: " + error.message });
+        }
+        return res.status(500).json({ message: "Internal server error.", error: error.message });
     }
 });
 

@@ -2,16 +2,22 @@
 import Footer from '../sections/Footer'; // Footer component for consistent page footer
 import Header from '../sections/Header'; // Header component for navigation
 import { useState, useEffect } from 'react'; // React hooks for state management and side effects
+import { useLocation } from 'react-router-dom'; // Hook to access route state
+import axios from 'axios'; // For API calls
 import '../css/Delivery.css'; // CSS styles for delivery page animations, form styling, and layout
 
 
 // Main Delivery component for handling delivery information, form validation, and order tracking
 const Delivery = () => {
+  const location = useLocation(); // Get order data from previous route
+  const orderData = location.state || {}; // Order data from Payment page
+  
   // State management for delivery form, UI interactions, and progress tracking
   const [isSubmitting, setIsSubmitting] = useState(false); // Tracks if form is being submitted (loading state)
   const [showSuccess, setShowSuccess] = useState(false); // Controls visibility of success message and timeline
   const [currentStep, setCurrentStep] = useState(1); // Tracks current step in delivery timeline (1-5)
   const [progress, setProgress] = useState(0); // Tracks overall progress percentage (0-100%)
+  const [userEmail, setUserEmail] = useState(''); // User email for order
 
   // State for form data with validation - stores all form field values
   const [formData, setFormData] = useState({
@@ -29,6 +35,24 @@ const Delivery = () => {
   // State for field validation errors - tracks validation messages for each field
   const [errors, setErrors] = useState({}); // Object storing error messages keyed by field name
   const [fieldFocus, setFieldFocus] = useState(''); // Tracks which form field currently has focus for visual styling
+
+  // Fetch user email on component mount
+  useEffect(() => {
+    const fetchUserEmail = async () => {
+      const username = localStorage.getItem('username');
+      if (username) {
+        try {
+          const response = await axios.get(`http://localhost:5000/getUserProfile/${username}`);
+          if (response.data && response.data.email) {
+            setUserEmail(response.data.email);
+          }
+        } catch (error) {
+          console.error('Error fetching user email:', error);
+        }
+      }
+    };
+    fetchUserEmail();
+  }, []);
 
 
   // Effect hook to simulate automatic progress through delivery timeline steps
@@ -205,7 +229,7 @@ const Delivery = () => {
 
 
   // Main form submission handler with validation and success flow
-  const handleConfirm = (e) => {
+  const handleConfirm = async (e) => {
     e.preventDefault(); // Prevent default form submission behavior (page reload)
 
     // Validate form before submission - check all fields meet requirements
@@ -222,9 +246,68 @@ const Delivery = () => {
 
     setIsSubmitting(true); // Set loading state to show processing indicator
 
-    // Simulate processing delay for better UX (API call simulation)
-    // Simulate processing delay
-    setTimeout(() => {
+    try {
+      // Get username from localStorage
+      const username = localStorage.getItem('username');
+      
+      if (!username) {
+        alert('Please login to place an order');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Prepare order data
+      // Extract dates - handle both object and direct date formats
+      let startDate = new Date();
+      let endDate = new Date();
+      
+      if (orderData.startDate) {
+        startDate = new Date(orderData.startDate);
+      } else if (orderData.rentalPeriod?.start) {
+        startDate = new Date(orderData.rentalPeriod.start);
+      }
+      
+      if (orderData.endDate) {
+        endDate = new Date(orderData.endDate);
+      } else if (orderData.rentalPeriod?.end) {
+        endDate = new Date(orderData.rentalPeriod.end);
+      } else if (orderData.formData?.endDate) {
+        endDate = new Date(orderData.formData.endDate);
+      }
+
+      // Extract appliance name - handle both object and string formats
+      let applianceName = 'Unknown';
+      if (orderData.appliance) {
+        if (typeof orderData.appliance === 'string') {
+          applianceName = orderData.appliance;
+        } else if (orderData.appliance.name) {
+          applianceName = orderData.appliance.name;
+        }
+      }
+
+      const orderToSave = {
+        user: username,
+        email: userEmail || '',
+        appliance: applianceName,
+        applianceId: orderData.appliance?._id || null,
+        startDate: startDate,
+        endDate: endDate,
+        totalAmount: orderData.totalAmount || orderData.finalAmount || 0,
+        status: 'pending',
+        deliveryAddress: {
+          area: formData.area,
+          city: formData.city,
+          street: formData.street,
+          number: formData.number,
+          zipCode: formData.zipCode,
+          phone: formData.phone
+        }
+      };
+
+      // Save order to database
+      const response = await axios.post('http://localhost:5000/addOrder', orderToSave);
+      console.log('Order saved successfully:', response.data);
+
       setIsSubmitting(false); // Clear loading state after processing
       setShowSuccess(true); // Show success message and trigger timeline animation
 
@@ -233,7 +316,11 @@ const Delivery = () => {
       setTimeout(() => {
         //  alert("Your order's on its way! 📦✨ We'll have it at your door soon."); // Success confirmation
       }, 1000); // 1 second delay after success state to allow animation to show
-    }, 2000); // 2 second processing simulation
+    } catch (error) {
+      console.error('Error saving order:', error);
+      setIsSubmitting(false);
+      alert('Failed to save order. Please try again.');
+    }
   };
 
 

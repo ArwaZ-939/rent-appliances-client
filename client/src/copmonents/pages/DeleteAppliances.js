@@ -120,6 +120,10 @@ const DeleteAppliances = () => {
     navigate('/customer-feedback')
   };
 
+  const handleCustomerChat = () => {
+    navigate('/customer-chat')
+  };
+
   return (
     <div className="admin-panel">
       <div className="sidebar">
@@ -137,6 +141,7 @@ const DeleteAppliances = () => {
           <li onClick={handleUpdateAppliances} className="menu-item bi bi-pencil-square">&nbsp;Update Appliance</li>
           <li onClick={handleCustomerControl} className="menu-item bi bi-person-lines-fill">&nbsp; Customer Control</li>
           <li onClick={handleCustomerFeedback} className="menu-item bi bi-person-lines-fill">&nbsp; Customer Feedback</li>
+          <li onClick={handleCustomerChat} className="menu-item bi bi-person-lines-fill">&nbsp; Customer Chat</li>
         </ul>
         <ul className="menu fixed-bottom p-4">
           <li onClick={handleSignOut} className="menu-item bi bi-box-arrow-right">&nbsp;Sign Out</li>

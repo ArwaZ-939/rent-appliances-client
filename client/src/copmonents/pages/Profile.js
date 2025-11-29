@@ -16,8 +16,7 @@ const Profiler = () => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
-    username: '',
-    email: ''
+    username: ''
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
@@ -34,8 +33,7 @@ const Profiler = () => {
     if (!isEditing) {
       // Initialize edit form with current values
       setEditForm({
-        username: userInfo.user,
-        email: userInfo.email
+        username: userInfo.user
       });
     }
     setIsEditing(!isEditing);
@@ -60,13 +58,6 @@ const Profiler = () => {
     return false;
       }
 
-    // Email validation
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@(gmail\.com)$/;
-    if (!editForm.email || !emailRegex.test(editForm.email)) {
-      setMessage({ text: 'Please enter a valid email address', type: 'error' });
-      return false;
-    }
-
     return true;
   };
 
@@ -84,8 +75,7 @@ const Profiler = () => {
     try {
       const username = localStorage.getItem('username');
       const updateData = {
-        newUsername: editForm.username !== userInfo.user ? editForm.username : undefined,
-        email: editForm.email !== userInfo.email ? editForm.email : undefined
+        newUsername: editForm.username !== userInfo.user ? editForm.username : undefined
       };
 
       const response = await axios.put(`http://localhost:5000/updateUser/${username}`, updateData);
@@ -100,8 +90,7 @@ const Profiler = () => {
           // Update local state with new data
           setUserInfo(prev => ({
             ...prev,
-            user: editForm.username,
-            email: editForm.email
+            user: editForm.username
           }));
           
           // Update localStorage if username changed
@@ -130,8 +119,7 @@ const Profiler = () => {
   const handleCancel = () => {
     setIsEditing(false);
     setEditForm({
-      username: '',
-      email: ''
+      username: ''
     });
     setMessage({ text: '', type: '' });
   };
@@ -238,24 +226,13 @@ const Profiler = () => {
                 
                 <div className="mb-3">
                   <label className="form-label"><strong>Email: </strong></label>
-                  {isEditing ? (
-                    <input
-                      type="email"
-                      name="email"
-                      value={editForm.email}
-                      onChange={handleInputChange}
-                      className={`form-control ${darkMode ? 'bg-dark text-light border-secondary' : ''}`}
-                      placeholder="Enter email"
-                      required
-                    />
-                  ) : (
-                    <input 
-                      type="email" 
-                      className={`form-control ${darkMode ? 'bg-dark text-light border-secondary' : ''}`}
-                      value={userInfo.email} 
-                      readOnly 
-                    />
-                  )}
+                  <input 
+                    type="email" 
+                    className={`form-control ${darkMode ? 'bg-dark text-light border-secondary' : ''}`}
+                    value={userInfo.email} 
+                    readOnly 
+                  />
+                  <small className="text-muted">Email can not be changed</small>
                 </div>
                 
                 <div className="mb-3">

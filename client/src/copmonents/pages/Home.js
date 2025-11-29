@@ -7,10 +7,12 @@ import { Row, Col } from 'reactstrap';
 import ApplianceCards from '../sections/AppliancesCatalog';
 import { useNavigate } from 'react-router-dom';
 import { DarkModeContext } from '../sections/DarkModeContext';
+import { useTranslation } from 'react-i18next';
 
 const Home = () => {
   const navigate = useNavigate();
   const { darkMode } = useContext(DarkModeContext);
+  const { t } = useTranslation();
 
   const handleRentClick = (price, appliance) => {
     navigate('/Rental', {
@@ -26,7 +28,7 @@ const Home = () => {
       <Header />
       <section className={`header ${darkMode ? 'bg-dark text-light' : 'bg-light text-dark'}`}>
         <div className="container1">
-          <h1 className={`brown-text ${darkMode ? 'text-light' : ''}`} style={{ color: darkMode ? '#ffffff' : '#7B4F2C' }}>Renting Household Appliances</h1>
+          <h1 className={`brown-text ${darkMode ? 'text-light' : ''}`} style={{ color: darkMode ? '#ffffff' : '#7B4F2C' }}>{t('home.title')}</h1>
           <br />
           <img src={logo} alt="Profile" width="400px" height="400px" />
         </div>

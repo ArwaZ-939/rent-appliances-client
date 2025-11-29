@@ -1,0 +1,100 @@
+{
+  "common": {
+    "home": "Home",
+    "contact": "Contact us",
+    "more": "More",
+    "signOut": "Sign Out",
+    "admin": "Admin",
+    "login": "Login",
+    "register": "Register",
+    "password": "Password",
+    "username": "Username",
+    "cancel": "Cancel",
+    "save": "Save",
+    "send": "Send",
+    "search": "Search",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "read": "Read",
+    "select": "Select",
+    "options": "Options"
+  },
+  "login": {
+    "title": "Sign in to your account",
+    "forgotPassword": "Forgot password?",
+    "createAccount": "Create an account?",
+    "invalidCredentials": "Invalid Username or Password !!",
+    "placeholderUsername": "Username",
+    "placeholderPassword": "Password"
+  },
+  "header": {
+    "home": "Home",
+    "contactUs": "Contact us",
+    "more": "More",
+    "feedbackAndRating": "Feedback and Rating",
+    "smartRecommendation": "Smart Recommendation",
+    "notifications": "Notifications",
+    "help": "Help",
+    "signOut": "Sign Out",
+    "switchToLightMode": "Switch to Light Mode",
+    "switchToDarkMode": "Switch to Dark Mode"
+  },
+  "notifications": {
+    "title": "Notification Settings",
+    "emailNotifications": "Receive notifications via Email",
+    "smsNotifications": "Receive notifications via SMS",
+    "phoneNumber": "Oman Phone Number",
+    "phonePlaceholder": "Enter your Oman phone number (e.g., 91234567)",
+    "phoneRequired": "Phone number is required for SMS notifications",
+    "phoneInvalid": "Phone number must be exactly 8 digits",
+    "phoneStartError": "Oman phone number must start with 7 or 9",
+    "phoneFormat": "Oman phone number must be 8 digits and start with 7 or 9 (e.g., 91234567 or 71234567)",
+    "notificationsTo": "Notifications will be sent to",
+    "yourRegisteredEmail": "Your registered email",
+    "savePreferences": "Save Preferences",
+    "savedSuccessfully": "Notification preferences saved successfully!"
+  },
+  "footer": {
+    "title": "Renting Household Appliances",
+    "admins": "Admins",
+    "references": "References",
+    "media": "Media",
+    "contact": "Contact",
+    "copyright": "© 2025 Copyright: Renting Household Appliances"
+  },
+  "home": {
+    "title": "Renting Household Appliances"
+  },
+  "customerChat": {
+    "title": "Customer Messages",
+    "subtitle": "View and manage customer chat messages",
+    "searchUsers": "Search users...",
+    "noChatsFound": "No chats found",
+    "selectUserToView": "Select a user to view messages",
+    "selectUserDescription": "Choose a customer from the list to see their chat history",
+    "typeReply": "Type your reply to {{user}}...",
+    "send": "Send",
+    "pleaseEnterMessage": "Please enter a message",
+    "pleaseSelectUser": "Please select a user to reply to",
+    "failedToLoad": "Failed to load chat messages",
+    "failedToSend": "Failed to send reply",
+    "message": "Message"
+  },
+  "admin": {
+    "addAppliance": "Add Appliance",
+    "deleteAppliance": "Delete Appliance",
+    "updateAppliance": "Update Appliance",
+    "customerControl": "Customer Control",
+    "customerFeedback": "Customer Feedback",
+    "customerChat": "Customer Chat",
+    "signOut": "Sign Out"
+  },
+  "profile": {
+    "mr": "Mr.",
+    "ms": "Ms."
+  }
+}
+
