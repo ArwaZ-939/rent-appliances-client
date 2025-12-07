@@ -143,24 +143,36 @@ const Header = () => {
   };
 
   const handlePreferenceChange = (type) => {
-    const newPreferences = {
-      ...notificationPreferences,
-      [type]: !notificationPreferences[type]
+  let newPreferences = { ...notificationPreferences };
+
+  if (type === "email") {
+    newPreferences = {
+      email: !notificationPreferences.email,
+      sms: false,  // force SMS off
     };
-    
-    setNotificationPreferences(newPreferences);
-    
-    // Clear phone error when SMS is deselected
-    if (type === 'sms' && !newPreferences.sms) {
-      setPhoneError('');
-    }
-    
-    // Validate phone number when SMS is selected and there's input
-    if (type === 'sms' && newPreferences.sms && phoneNumber.trim()) {
-      const error = validateOmanPhoneNumber(phoneNumber);
-      setPhoneError(error);
-    }
-  };
+  }
+
+  if (type === "sms") {
+    newPreferences = {
+      email: false, // force Email off
+      sms: !notificationPreferences.sms,
+    };
+  }
+
+  setNotificationPreferences(newPreferences);
+
+  // Clear phone error if SMS is turned off
+  if (!newPreferences.sms) {
+    setPhoneError('');
+  }
+
+  // Validate phone number if SMS is turned on and phone exists
+  if (newPreferences.sms && phoneNumber.trim()) {
+    const error = validateOmanPhoneNumber(phoneNumber);
+    setPhoneError(error);
+  }
+};
+
 
   const handleNotificationSave = () => {
     // Validate if SMS is selected
