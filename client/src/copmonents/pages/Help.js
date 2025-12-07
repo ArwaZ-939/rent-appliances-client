@@ -17,7 +17,6 @@ const Help = () => {
           <h2 style={{ color: '#7B4F2C' }}>{t('help.title')}</h2>
           <form>
           <div className="modal-body">
-                
                 <h5>{t('help.returnWindow')}</h5>
                 <p>{t('help.returnWindowText')}</p>
                 
