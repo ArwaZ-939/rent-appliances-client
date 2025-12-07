@@ -17,6 +17,8 @@ const CustomerChat = () => {
   const [usersWithMessages, setUsersWithMessages] = useState([]);
   const [lastViewed, setLastViewed] = useState({});
   const [readChats, setReadChats] = useState(new Set());
+  const [searchSuggestions, setSearchSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const Profiler = 'https://static.vecteezy.com/system/resources/thumbnails/013/360/247/small/default-avatar-photo-icon-social-media-profile-sign-symbol-vector.jpg';
   const user = { gender: 'Female', user: 'Admin' };
@@ -84,6 +86,22 @@ const CustomerChat = () => {
       return msgTime > viewedTime && !m.message.startsWith('[ADMIN REPLY]');
     }).length;
   };
+
+  // Generate autocomplete suggestions based on search term
+  useEffect(() => {
+    if (searchTerm.trim() === '') {
+      setSearchSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    
+    const filtered = usersWithMessages
+      .filter(user => user.toLowerCase().includes(searchTerm.toLowerCase()))
+      .slice(0, 5); // Limit to 5 suggestions
+    
+    setSearchSuggestions(filtered);
+    setShowSuggestions(filtered.length > 0);
+  }, [searchTerm, usersWithMessages]);
 
   const sendAdminReply = async (e) => {
     e.preventDefault();
@@ -243,7 +261,18 @@ const CustomerChat = () => {
                     type="text"
                     placeholder={t('customerChat.searchUsers')}
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value);
+                      setShowSuggestions(true);
+                    }}
+                    onFocus={() => {
+                      if (searchSuggestions.length > 0) {
+                        setShowSuggestions(true);
+                      }
+                    }}
+                    onBlur={() => {
+                      setTimeout(() => setShowSuggestions(false), 200);
+                    }}
                     style={{
                       width: '100%',
                       padding: '12px 15px 12px 40px',
@@ -253,8 +282,7 @@ const CustomerChat = () => {
                       outline: 'none',
                       transition: 'border-color 0.3s',
                     }}
-                    onFocus={(e) => e.target.style.borderColor = '#7B4F2C'}
-                    onBlur={(e) => e.target.style.borderColor = '#e8ecf0'}
+                    autoComplete="off"
                   />
                   <i className="bi bi-search" style={{
                     position: 'absolute',
@@ -263,6 +291,48 @@ const CustomerChat = () => {
                     transform: 'translateY(-50%)',
                     color: '#6c757d'
                   }}></i>
+                  
+                  {/* Autocomplete Suggestions */}
+                  {showSuggestions && searchSuggestions.length > 0 && (
+                    <ul style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      zIndex: 1000,
+                      background: '#fff',
+                      border: '1px solid #e8ecf0',
+                      borderRadius: '8px',
+                      listStyle: 'none',
+                      padding: 0,
+                      margin: '5px 0 0 0',
+                      maxHeight: '200px',
+                      overflowY: 'auto',
+                      boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                    }}>
+                      {searchSuggestions.map((user, idx) => (
+                        <li
+                          key={idx}
+                          onClick={() => {
+                            setSearchTerm(user);
+                            setShowSuggestions(false);
+                            handleUserSelect(user);
+                          }}
+                          style={{
+                            padding: '12px 15px',
+                            cursor: 'pointer',
+                            borderBottom: idx < searchSuggestions.length - 1 ? '1px solid #eee' : 'none',
+                            fontSize: '14px',
+                            transition: 'background-color 0.2s',
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.background = '#f5f5f5'}
+                          onMouseLeave={e => e.currentTarget.style.background = '#fff'}
+                        >
+                          {user}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               </div>
 

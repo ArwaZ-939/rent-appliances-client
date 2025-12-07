@@ -205,7 +205,7 @@ const Header = () => {
     <>
       <Navbar className={`navbar-h ${darkMode ? 'bg-dark text-light' : 'bg-light text-dark'}`} expand="lg" fixed="top" style={{ padding: '0.5rem 1rem' }}>
         <div className="container d-flex justify-content-between align-items-center">
-          {/* Left side: Profile */}
+          {/* Left side: User Info */}
           <div className="d-flex align-items-center gap-3">
             <div className="profile-image-container" style={{ cursor: 'pointer' }} onClick={() => navigate("/profile")}>
               <img
@@ -221,7 +221,7 @@ const Header = () => {
                 }}
               />
             </div>
-            <NavbarBrand href="#" style={{ cursor: 'pointer' }} onClick={() => navigate("/profile")}>
+            <NavbarBrand href="#" style={{ cursor: 'pointer' }} onClick={() => navigate("/profile")} title={userInfo.user}>
               <h5 className="mb-0">
                 {userInfo.gender === 'Male' ? t('profile.mr') : t('profile.ms')} {userInfo.user}
               </h5>
@@ -270,8 +270,8 @@ const Header = () => {
             </NavItem>
 
             {/* Language Switcher */}
-            <NavItem>
-              <LanguageSwitcher />
+            <NavItem className="brown-text">
+              <LanguageSwitcher style={{ color: "brown" }} />
             </NavItem>
 
             {/* Dark Mode Toggle */}

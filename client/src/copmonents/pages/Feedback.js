@@ -3,8 +3,10 @@ import Footer from '../sections/Footer'
 import Header from '../sections/Header'
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 
 const Feedback = () => {
+  const { t } = useTranslation();
   const [rating, setRating] = useState(0);
   const [message, setMessage] = useState('');
   const [userInfo, setUserInfo] = useState({ user: '', email: '' });
@@ -18,7 +20,7 @@ const Feedback = () => {
         .then((response) => {
           if (response.data) {
             setUserInfo({
-              user: response.data.user || 'Anonymous',
+              user: response.data.user || t('feedback.anonymous'),
               email: response.data.email || ''
             });
           }
@@ -27,14 +29,14 @@ const Feedback = () => {
           console.error('Error fetching user data:', error);
           // If user profile fetch fails, still allow anonymous feedback
           setUserInfo({
-            user: username || 'Anonymous',
+            user: username || t('feedback.anonymous'),
             email: ''
           });
         });
     } else {
       // User not logged in, allow anonymous feedback
       setUserInfo({
-        user: 'Anonymous',
+        user: t('feedback.anonymous'),
         email: ''
       });
     }
@@ -48,19 +50,19 @@ const Feedback = () => {
     e.preventDefault();
     
     if (!message.trim()) {
-      setError('Please enter your feedback message.');
+      setError(t('feedback.pleaseEnterMessage'));
       return;
     }
 
     if (rating === 0) {
-      setError('Please select a rating.');
+      setError(t('feedback.pleaseSelectRating'));
       return;
     }
 
     setError('');
 
     const feedbackData = {
-      user: userInfo.user || 'Anonymous',
+      user: userInfo.user || t('feedback.anonymous'),
       email: userInfo.email || '',
       message: message,
       rating: rating
@@ -78,12 +80,12 @@ const Feedback = () => {
       }
     } catch (error) {
       console.error('Error submitting feedback:', error);
-      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to submit feedback. Please try again.';
+      const errorMessage = error?.response?.data?.message || error?.message || t('feedback.failedToSubmit');
       setError(errorMessage);
       
       // If it's a network error, provide more helpful message
       if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
-        setError('Cannot connect to server. Please make sure the server is running.');
+        setError(t('feedback.cannotConnect'));
       }
     }
   };
@@ -94,10 +96,10 @@ const Feedback = () => {
     <div className="container contact-container">
             <div className="contact-content">
               <div className="contact-form">
-                <h2 style={{ color: '#7B4F2C' }}>Feedback</h2>
+                <h2 style={{ color: '#7B4F2C' }}>{t('feedback.feedback')}</h2>
                 {submitted && (
                   <div style={{ color: 'green', marginBottom: '10px', padding: '10px', backgroundColor: '#d4edda', borderRadius: '5px' }}>
-                    Thank you for your feedback!
+                    {t('feedback.thankYou')}
                   </div>
                 )}
                 {error && (
@@ -112,7 +114,7 @@ const Feedback = () => {
                       className="form-control" 
                       id="message" 
                       rows="4" 
-                      placeholder="Your Feedback" 
+                      placeholder={t('feedback.yourFeedback')} 
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
                       required
@@ -130,7 +132,7 @@ const Feedback = () => {
                       </span>
                     ))}
                   </div>
-                  <button type="submit" className="btn btn-submit">SUBMIT</button>
+                  <button type="submit" className="btn btn-submit">{t('feedback.submit')}</button>
                 </form>
               </div>
             </div>

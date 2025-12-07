@@ -22,7 +22,7 @@ mongoose.connect(MongConnect,{
 });
 
 
-//Search by Keyword
+//Search by Keyword - Enhanced to support both English and Arabic
 app.get('/api/suggestions', async (req, res) => {
   const { keyword } = req.query;
 
@@ -31,13 +31,21 @@ app.get('/api/suggestions', async (req, res) => {
   }
 
   try {
+    // Search in both English name and Arabic name fields
     const suggestions = await Appliance.find({
-      name: { $regex: `^${keyword}`, $options: 'i' } // starts with keyword
-    }).limit(5); // limit suggestions
+      $or: [
+        { name: { $regex: keyword, $options: 'i' } },
+        { name_ar: { $regex: keyword, $options: 'i' } }
+      ]
+    }).limit(10); // limit suggestions
 
-    const names = suggestions.map(item => item.name); // return only names
+    // Return both English and Arabic names for better matching
+    const results = suggestions.map(item => ({
+      name: item.name,
+      name_ar: item.name_ar || null
+    }));
 
-    res.json(names);
+    res.json(results);
   } catch (error) {
     console.error('Error fetching suggestions:', error);
     res.status(500).json({ error: 'Server error' });
@@ -273,9 +281,11 @@ app.post("/inserAppliance", async (req, res) => {
         
         const newAppliance = new ApplianceModel({
             name: req.body.name,
+            name_ar: req.body.name_ar || "",
             imgUrl: req.body.imgUrl || "",
             price: parseFloat(req.body.price) || 0,
             details: req.body.details,
+            details_ar: req.body.details_ar || "",
             available: req.body.available,
         });
         
@@ -446,7 +456,7 @@ app.put('/test-update', (req, res) => {
 app.put('/updateAppliance/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, imgUrl, price, details, available } = req.body;
+        const { name, name_ar, imgUrl, price, details, details_ar, available } = req.body;
 
         console.log("=== UPDATE APPLIANCE REQUEST ===");
         console.log("Appliance ID:", id);
@@ -468,9 +478,11 @@ app.put('/updateAppliance/:id', async (req, res) => {
 
         // Update appliance details
         if (name) appliance.name = name;
+        if (name_ar !== undefined) appliance.name_ar = name_ar;
         if (imgUrl !== undefined) appliance.imgUrl = imgUrl;
         if (price) appliance.price = parseFloat(price);
         if (details) appliance.details = details;
+        if (details_ar !== undefined) appliance.details_ar = details_ar;
         if (available !== undefined) appliance.available = available;
 
         console.log("Updated appliance before save:", appliance);
@@ -695,11 +707,26 @@ app.post("/addOrder", async (req, res) => {
             return res.status(400).json({ message: "User, email, and appliance are required." });
         }
         
+        // Find an available appliance with the matching name
+        const availableAppliance = await ApplianceModel.findOne({
+            name: req.body.appliance,
+            available: true
+        });
+        
+        if (!availableAppliance) {
+            return res.status(400).json({ message: "No available appliances of this type. Please try another appliance." });
+        }
+        
+        // Mark the appliance as unavailable
+        availableAppliance.available = false;
+        await availableAppliance.save();
+        console.log(`Appliance ${availableAppliance._id} (${availableAppliance.name}) marked as unavailable`);
+        
         const newOrder = new OrderModel({
             user: req.body.user,
             email: req.body.email,
             appliance: req.body.appliance,
-            applianceId: req.body.applianceId || null,
+            applianceId: availableAppliance._id,
             startDate: req.body.startDate ? new Date(req.body.startDate) : new Date(),
             endDate: req.body.endDate ? new Date(req.body.endDate) : new Date(),
             totalAmount: req.body.totalAmount || 0,

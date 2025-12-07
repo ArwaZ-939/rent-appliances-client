@@ -4,9 +4,11 @@ import Footer from "../sections/Footer";
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { DarkModeContext } from '../sections/DarkModeContext';
+import { useTranslation } from 'react-i18next';
 
 
 const Profiler = () => {
+  const { t } = useTranslation();
   const [userInfo, setUserInfo] = useState({
     imgUrl: 'https://static.vecteezy.com/system/resources/thumbnails/013/360/247/small/default-avatar-photo-icon-social-media-profile-sign-symbol-vector.jpg',
     user: 'John Doe',
@@ -54,7 +56,7 @@ const Profiler = () => {
     // Username validation
     const usernameRegex = /^[a-zA-Z][a-zA-Z0-9]*$/;
     if (!usernameRegex.test(editForm.username.trim())) {
-    setMessage({ text: 'Username must start with a letter and contain only letters or numbers', type: 'error' });
+    setMessage({ text: t('profile.usernameValidation'), type: 'error' });
     return false;
       }
 
@@ -98,16 +100,16 @@ const Profiler = () => {
             localStorage.setItem('username', editForm.username.toLowerCase());
           }
           
-          setMessage({ text: 'Profile updated successfully!', type: 'success' });
+          setMessage({ text: t('profile.profileUpdated'), type: 'success' });
           setIsEditing(false);
         } else {
-          setMessage({ text: 'Profile updated but verification failed. Please refresh the page.', type: 'warning' });
+          setMessage({ text: t('profile.verificationFailed'), type: 'warning' });
         }
       }
     } catch (error) {
       console.error('Error updating profile:', error);
       setMessage({ 
-        text: error.response?.data?.message || 'Failed to update profile. Please try again.', 
+        text: error.response?.data?.message || t('profile.updateFailed'), 
         type: 'error' 
       });
     } finally {
@@ -167,14 +169,14 @@ const Profiler = () => {
         <div className={`card p-4 shadow ${darkMode ? 'bg-dark border-secondary text-light' : 'bg-light text-dark'}`} style={{ maxWidth: "600px", width: "100%" }}>
           <form onSubmit={handleSubmit}>
             <div className="d-flex justify-content-between align-items-center mb-4">
-              <h2 className="text-center mb-0">User Profile</h2>
+              <h2 className="text-center mb-0">{t('profile.title')}</h2>
               <button 
                 type="button" 
                 className={`btn ${isEditing ? 'btn-secondary' : darkMode ? 'btn-outline-light' : 'btn-primary'}`}
                 onClick={handleEditToggle}
                 disabled={loading}
               >
-                {isEditing ? 'Cancel' : 'Edit Profile'}
+                {isEditing ? t('profile.cancel') : t('profile.editProfile')}
               </button>
             </div>
 
@@ -203,7 +205,7 @@ const Profiler = () => {
               
               <div className="w-100">
                 <div className="mb-3">
-                  <label className="form-label"><strong>Username: </strong></label>
+                  <label className="form-label"><strong>{t('profile.username')}</strong></label>
                   {isEditing ? (
                     <input
                       type="text"
@@ -211,7 +213,7 @@ const Profiler = () => {
                       value={editForm.username}
                       onChange={handleInputChange}
                       className={`form-control ${darkMode ? 'bg-dark text-light border-secondary' : ''}`}
-                      placeholder="Enter username"
+                      placeholder={t('profile.enterUsername')}
                       required
                     />
                   ) : (
@@ -225,25 +227,25 @@ const Profiler = () => {
                 </div>
                 
                 <div className="mb-3">
-                  <label className="form-label"><strong>Email: </strong></label>
+                  <label className="form-label"><strong>{t('profile.email')}</strong></label>
                   <input 
                     type="email" 
                     className={`form-control ${darkMode ? 'bg-dark text-light border-secondary' : ''}`}
                     value={userInfo.email} 
                     readOnly 
                   />
-                  <small className="text-muted">Email can not be changed</small>
+                  <small className="text-muted">{t('profile.emailCannotChange')}</small>
                 </div>
                 
                 <div className="mb-3">
-                  <label className="form-label"><strong>Gender: </strong></label>
+                  <label className="form-label"><strong>{t('profile.gender')}</strong></label>
                   <input 
                     type="text" 
                     className={`form-control ${darkMode ? 'bg-dark text-light border-secondary' : ''}`}
-                    value={userInfo.gender} 
+                    value={userInfo.gender === 'Male' ? t('register.male') : userInfo.gender === 'Female' ? t('register.female') : userInfo.gender} 
                     readOnly 
                   />
-                  <small className="text-muted">Gender can not be changed</small>
+                  <small className="text-muted">{t('profile.genderCannotChange')}</small>
                 </div>
               </div>
             </div>
@@ -256,7 +258,7 @@ const Profiler = () => {
                 className={`btn btn-link text-decoration-none ${darkMode ? 'text-light' : 'text-dark'}`}
                 onClick={ResetPassword}
               >
-                Reset password?
+                {t('profile.resetPassword')}
               </button>
               
               {isEditing && (
@@ -266,7 +268,7 @@ const Profiler = () => {
                     className={`btn ${darkMode ? 'btn-outline-light' : 'btn-primary'}`}
                     disabled={loading}
                   >
-                    {loading ? 'Updating...' : 'Save Changes'}
+                    {loading ? t('profile.updating') : t('profile.saveChanges')}
                   </button>
                 </div>
               )}

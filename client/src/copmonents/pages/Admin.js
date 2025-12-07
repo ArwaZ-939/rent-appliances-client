@@ -4,16 +4,21 @@ import admin from "../assets/admin.png";
 import axios from 'axios';
 import { Modal, ModalHeader, ModalBody, Button } from "reactstrap";
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const Admin = () => {
+  const { t } = useTranslation();
   // Local state for form inputs
   const [selectedUser, setSelectedUser] = useState("");
   const [name, setName] = useState("");
+  const [nameAr, setNameAr] = useState("");
   const [imgUrl, setImgUrl] = useState("");
   const [price, setprice] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [details, setDetails] = useState("");
+  const [detailsAr, setDetailsAr] = useState("");
   const [available, setAvailable] = useState(true);
+  const [quantity, setQuantity] = useState(1);
   const [showDialog, setShowDialog] = useState(false);
   const [dialogMessage, setDialogMessage] = useState("");
 
@@ -28,48 +33,70 @@ const Admin = () => {
   
   
   // Handle appliance submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
   
     if (!name || !price || !details) {
-      setDialogMessage("Please fill in all required fields (Name, Price, and Details are required).");
+      setDialogMessage(t('admin.fillRequiredFields'));
       setShowDialog(true);
       return;
     }
-  
+
+    if (quantity < 1 || quantity > 100) {
+      setDialogMessage(t('admin.quantityRange'));
+      setShowDialog(true);
+      return;
+    }
+
     const applianceData = {
       name: name,
+      name_ar: nameAr,
       imgUrl: imgUrl,
       price: price,
       details: details,
+      details_ar: detailsAr,
       available: available
     };
-  
-    axios.post('http://localhost:3000/inserAppliance', applianceData)
-      .then((response) => {
-        const message = response?.data?.message || (response.status === 201 ? "Appliance added successfully!" : "Failed to add appliance.");
-        setDialogMessage(message);
-        if (response.status === 201) {
-          setSelectedUser("");
-          setName("");
-          setImgUrl("");
-          setprice("");
-          setDueDate("");
-          setDetails("");
-          setAvailable(true);
-          
-          // Notify other components that appliances have been updated
-          localStorage.setItem('applianceUpdated', Date.now().toString());
-          window.dispatchEvent(new Event('storage'));
-        }
-        setShowDialog(true);
-      })
-      .catch((error) => {
-        console.error("Error adding appliance:", error?.response?.data || error);
-        const message = error?.response?.data?.message || "An error occurred. Please try again later.";
-        setDialogMessage(message);
-        setShowDialog(true);
-      });
+
+    try {
+      // Add multiple appliances based on quantity
+      const promises = [];
+      for (let i = 0; i < quantity; i++) {
+        promises.push(axios.post('http://localhost:5000/inserAppliance', applianceData));
+      }
+
+      const results = await Promise.all(promises);
+      const successCount = results.filter(r => r.status === 201).length;
+      
+      const message = successCount === quantity 
+        ? `${quantity} appliance(s) added successfully!`
+        : `Only ${successCount} out of ${quantity} appliance(s) were added.`;
+      
+      setDialogMessage(message);
+      
+      if (successCount > 0) {
+        setSelectedUser("");
+        setName("");
+        setNameAr("");
+        setImgUrl("");
+        setprice("");
+        setDueDate("");
+        setDetails("");
+        setDetailsAr("");
+        setAvailable(true);
+        setQuantity(1);
+        
+        // Notify other components that appliances have been updated
+        localStorage.setItem('applianceUpdated', Date.now().toString());
+        window.dispatchEvent(new Event('storage'));
+      }
+      setShowDialog(true);
+    } catch (error) {
+      console.error("Error adding appliance:", error?.response?.data || error);
+      const message = error?.response?.data?.message || "An error occurred. Please try again later.";
+      setDialogMessage(message);
+      setShowDialog(true);
+    }
   };
 
   const handleSignOut = () => {
@@ -113,15 +140,15 @@ const Admin = () => {
          <br/>
         </div>
         <ul className="menu">
-          <li onClick={handleAddAppliances} className="menu-item bi bi-list-task">&nbsp;Add Appliance</li>
-          <li onClick={handleDeleteAppliances} className="menu-item bi bi-trash">&nbsp;Delete Appliance</li>
-          <li onClick={handleUpdateAppliances} className="menu-item bi bi-pencil-square">&nbsp;Update Appliance</li>
-          <li onClick={handleCustomerControl} className="menu-item bi bi-person-lines-fill">&nbsp; Customer Control</li>
-          <li onClick={handleCustomerFeedback} className="menu-item bi bi-person-lines-fill">&nbsp; Customer Feedback</li>
-          <li onClick={handleCustomerChat} className="menu-item bi bi-person-lines-fill">&nbsp; Customer Chat</li>
+          <li onClick={handleAddAppliances} className="menu-item bi bi-list-task">&nbsp;{t('admin.addAppliance')}</li>
+          <li onClick={handleDeleteAppliances} className="menu-item bi bi-trash">&nbsp;{t('admin.deleteAppliance')}</li>
+          <li onClick={handleUpdateAppliances} className="menu-item bi bi-pencil-square">&nbsp;{t('admin.updateAppliance')}</li>
+          <li onClick={handleCustomerControl} className="menu-item bi bi-person-lines-fill">&nbsp; {t('admin.customerControl')}</li>
+          <li onClick={handleCustomerFeedback} className="menu-item bi bi-person-lines-fill">&nbsp; {t('admin.customerFeedback')}</li>
+          <li onClick={handleCustomerChat} className="menu-item bi bi-person-lines-fill">&nbsp; {t('admin.customerChat')}</li>
         </ul>
         <ul className="menu fixed-bottom p-4">
-          <li onClick={handleSignOut} className="menu-item bi bi-box-arrow-right">&nbsp;Sign Out</li>
+          <li onClick={handleSignOut} className="menu-item bi bi-box-arrow-right">&nbsp;{t('admin.signOut')}</li>
         </ul>
       </div>
       <br/>
@@ -130,12 +157,12 @@ const Admin = () => {
       &nbsp;
       <div className="container-admin">
         <div className="left-section-admin">
-          <h2>Add new Appliance</h2>
+          <h2>{t('admin.addNewAppliance')}</h2>
             <div className="input-group">
               
             </div>
 
-            <label className="label">Image Url:</label>
+            <label className="label">{t('admin.imageUrl')}</label>
             <div className="input-group">
               <div className="input-group-prepend">
                 <span className="input-group-text">
@@ -153,7 +180,7 @@ const Admin = () => {
               />
             </div>
 
-            <label className="label">Name :</label>
+            <label className="label">{t('admin.name')}</label>
             <div className="input-group">
               <div className="input-group-prepend">
                 <span className="input-group-text">
@@ -164,14 +191,31 @@ const Admin = () => {
                 type="text"
                 id="title"
                 className="form-control"
-                placeholder="Enter Name .."
+                placeholder={t('admin.enterName')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
+
+            <label className="label">Name (Arabic):</label>
+            <div className="input-group">
+              <div className="input-group-prepend">
+                <span className="input-group-text">
+                  <i className="bi bi-sticky-fill"></i>
+                </span>
+              </div>
+              <input
+                type="text"
+                id="nameAr"
+                className="form-control"
+                placeholder="Enter Name in Arabic (Optional)"
+                value={nameAr}
+                onChange={(e) => setNameAr(e.target.value)}
+              />
+            </div>
             
 
-            <label className="label">Price :</label>
+            <label className="label">{t('admin.price')}</label>
             <div className="input-group">
               <div className="input-group-prepend">
                 <span className="input-group-text">
@@ -182,14 +226,14 @@ const Admin = () => {
                 type="number"
                 id="title"
                 className="form-control"
-                placeholder="Enter price .."
+                placeholder={t('admin.enterPrice')}
                 value={price}
                 min={1}
                 onChange={(e) => setprice(e.target.value)}
               />
             </div>
 
-            <label className="label">details :</label>
+            <label className="label">{t('admin.details')}</label>
             <div className="input-group">
               <div className="input-group-prepend">
                 <span className="input-group-text">
@@ -199,21 +243,57 @@ const Admin = () => {
               <textarea
                 id="task"
                 className="form-control"
-                placeholder="Enter the details .."
+                placeholder={t('admin.enterDetails')}
                 rows="4"
                 value={details}
                 onChange={(e) => setDetails(e.target.value)}
               ></textarea>
             </div>
 
+            <label className="label">Details (Arabic):</label>
+            <div className="input-group">
+              <div className="input-group-prepend">
+                <span className="input-group-text">
+                  <i className="bi bi-pencil-fill"></i>
+                </span>
+              </div>
+              <textarea
+                id="detailsAr"
+                className="form-control"
+                placeholder="Enter Details in Arabic (Optional)"
+                rows="4"
+                value={detailsAr}
+                onChange={(e) => setDetailsAr(e.target.value)}
+              ></textarea>
+            </div>
+
+            <label className="label">{t('admin.quantity')}</label>
+            <div className="input-group">
+              <div className="input-group-prepend">
+                <span className="input-group-text">
+                  <i className="bi bi-123"></i>
+                </span>
+              </div>
+              <input
+                type="number"
+                id="quantity"
+                className="form-control"
+                placeholder="Enter quantity (1-100)"
+                value={quantity}
+                min={1}
+                max={100}
+                onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+              />
+            </div>
+
             <div className="form-check my-2">
 			  <input className="form-check-input" type="checkbox" id="availableCheck" checked={available} onChange={(e) => setAvailable(e.target.checked)} />
 			  <label className="form-check-label" htmlFor="availableCheck">
-				Available
+				{t('admin.available')}
 			  </label>
 			</div>
 
-            <button onClick={handleSubmit} className="login-btn-admin">Submit</button>
+            <button onClick={handleSubmit} className="login-btn-admin">{t('admin.submit')}</button>
         </div>
 
         <div className="right-section-admin">

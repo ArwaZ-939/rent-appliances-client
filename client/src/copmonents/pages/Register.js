@@ -8,8 +8,11 @@ import { useForm } from "react-hook-form";
 import axios from "axios";
 import male from "../assets/male.jpg";
 import female from "../assets/female.png";
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from '../sections/LanguageSwitcher';
 
 const Register = () => {
+  const { t } = useTranslation();
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [cpasswordVisible, setCPasswordVisible] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState(true);
@@ -89,8 +92,11 @@ const Register = () => {
 
   return (
     <form className="container-register" onSubmit={submitForm(handleSubmit)}>
+      <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 1000 }}>
+        <LanguageSwitcher />
+      </div>
       <div className="left-section">
-        <h2 className="signip">Sign up for a new account</h2>
+        <h2 className="signip">{t('register.title')}</h2>
         
         {/* Username Field */}
         <span className="error small">{errors.username?.message}</span>
@@ -103,7 +109,7 @@ const Register = () => {
           <input
             type="text"
             className="form-control"
-            placeholder="Username"
+            placeholder={t('register.username')}
             {...register("username", {
               onChange: (e) => checkUsernameAvailability(e.target.value)
             })}
@@ -127,7 +133,7 @@ const Register = () => {
           <input
             type="text"
             className="form-control"
-            placeholder="Profile Image Url (Optional)"
+            placeholder={t('register.profileImageUrl')}
             {...register("ProfileUrl")}
           />
         </div>
@@ -143,7 +149,7 @@ const Register = () => {
           <input
             type="email"
             className="form-control"
-            placeholder="Your Email"
+            placeholder={t('register.email')}
             {...register("email")}
           />
         </div>
@@ -155,12 +161,12 @@ const Register = () => {
             <label>
               <input type="radio" value="Male" {...register("gender")} />
               <img className="rounded-circle" src={male} alt="male" height="18px" />
-              &nbsp;&nbsp;Male
+              &nbsp;&nbsp;{t('register.male')}
             </label>
             <label>
               <input type="radio" value="Female" {...register("gender")} />
               <img className="rounded-circle" src={female} alt="female" height="18px" />
-              &nbsp;&nbsp;Female
+              &nbsp;&nbsp;{t('register.female')}
             </label>
             <span className="selection"></span>
           </div>
@@ -177,7 +183,7 @@ const Register = () => {
           <input
             type={passwordVisible ? "text" : "password"}
             className="form-control"
-            placeholder="Password"
+            placeholder={t('register.password')}
             {...register("password")}
           />
           <div className="input-group-append">
@@ -202,7 +208,7 @@ const Register = () => {
           <input
             type={cpasswordVisible ? "text" : "password"}
             className="form-control"
-            placeholder="Repeat your password"
+            placeholder={t('register.confirmPassword')}
             {...register("conPassword")}
           />
           <div className="input-group-append">
@@ -236,7 +242,7 @@ const Register = () => {
         
         <br />
         <button type="submit" className="cssbuttons-io-button">
-          Register
+          {t('register.submit')}
           <div className="icon">
             <svg height="24" width="24" viewBox="0 0 24 24">
               <path d="M0 0h24v24H0z" fill="none"></path>

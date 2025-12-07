@@ -5,10 +5,12 @@ import Footer from '../sections/Footer'; // Footer component
 import Header from '../sections/Header'; // Header component
 import { useNavigate, useLocation } from 'react-router-dom'; // Hooks for navigation and accessing passed state
 import { useState, useEffect } from 'react'; // React hooks for managing state and side effects
+import { useTranslation } from 'react-i18next';
 
 
 // Main RentalBooking component for handling appliance rental reservations
 const RentalBooking = () => {
+  const { t } = useTranslation();
   // Navigation hook to programmatically navigate between pages
   const navigate = useNavigate(); // Used to navigate to the payment page
 
@@ -152,13 +154,13 @@ const RentalBooking = () => {
 
     // Validate Oman phone number
     if (phoneNumber.length !== 8 || !['7', '9'].includes(phoneNumber[0])) {
-      alert('Please enter a valid Oman phone number (8 digits starting with 7 or 9)');
+      alert(t('rentalBooking.validPhoneNumber'));
       return;
     }
 
     // Validate start date
     if (!startDate) {
-      alert('Please select a rental start date');
+      alert(t('rentalBooking.selectStartDate'));
       return;
     }
 
@@ -250,15 +252,15 @@ const RentalBooking = () => {
               >
                 {/* Notice heading */}
                 <h5 style={{ margin: '0 0 10px 0', fontSize: '16px' }}>
-                  Important Notice – Refundable Insurance Deposit
+                  {t('rentalBooking.importantNotice')}
                 </h5>
                 {/* Deposit amount information */}
                 <p style={{ margin: '0 0 10px 0', fontSize: '14px' }}>
-                  Please note that an additional amount of 20 OMR will be added to your total as a refundable insurance deposit.
+                  {t('rentalBooking.depositNotice')}
                 </p>
                 {/* Deposit terms and conditions */}
                 <p style={{ margin: 0, fontSize: '14px' }}>
-                  This deposit will be fully refunded upon the return of the rented product on time and in good condition (i.e., no damage, crashes, or excessive wear).
+                  {t('rentalBooking.depositTerms')}
                 </p>
               </div>
 
@@ -277,7 +279,7 @@ const RentalBooking = () => {
               >
                 {/* Rental period and duration info */}
                 <p style={{ margin: '0 0 10px 0', fontSize: '14px' }}>
-                  <strong>Rental Period:</strong> {days} {rentalPeriod} ({rentalPeriod === 'weeks' ? days * 7 : days} days)
+                  <strong>{t('rentalBooking.rentalPeriod')}:</strong> {days} {rentalPeriod === 'weeks' ? t('rentalBooking.weeks') : t('rentalBooking.days')} ({rentalPeriod === 'weeks' ? days * 7 : days} {t('rentalBooking.days')})
                 </p>
                 
                 {/* Rental dates display */}
@@ -290,28 +292,28 @@ const RentalBooking = () => {
                     borderLeft: '4px solid #28a745'
                   }}>
                     <p style={{ margin: '4px 0', fontSize: '14px', fontWeight: 'bold', color: '#155724' }}>
-                      Rental Dates:
+                      {t('rentalBooking.rentalDates')}
                     </p>
                     <p style={{ margin: '2px 0', fontSize: '13px' }}>
-                      <strong>Start:</strong> {formatDisplayDate(startDate)}
+                      <strong>{t('rentalBooking.start')}</strong> {formatDisplayDate(startDate)}
                     </p>
                     <p style={{ margin: '2px 0', fontSize: '13px' }}>
-                      <strong>End:</strong> {formatDisplayDate(calculatedEndDate)}
+                      <strong>{t('rentalBooking.end')}</strong> {formatDisplayDate(calculatedEndDate)}
                     </p>
                   </div>
                 )}
                 
                 {/* Rental amount line */}
                 <h4 style={{ color: '#7B4F2C', margin: '0 0 5px 0' }}>
-                  Rental Amount: {totalAmount} OMR
+                  {t('rentalBooking.rentalAmount')}: {totalAmount} OMR
                 </h4>
                 {/* Insurance deposit line */}
                 <h4 style={{ color: '#7B4F2C', margin: '0 0 5px 0' }}>
-                  Insurance Deposit: 20 OMR
+                  {t('rentalBooking.insuranceDepositAmount')}
                 </h4>
                 {/* Final total amount with visual separator */}
                 <h4 style={{ color: '#7B4F2C', margin: 0, borderTop: '1px solid #dee2e6', paddingTop: '5px' }}>
-                  Final Amount: {totalAmount + 20} OMR
+                  {t('rentalBooking.finalAmount')}: {totalAmount + 20} OMR
                 </h4>
               </div>
 
@@ -322,7 +324,7 @@ const RentalBooking = () => {
                 {/* Rental period selection radio buttons */}
                 <div className="form-group">
                   <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>
-                    Rental Period <span className="text-danger">*</span>
+                    {t('rentalBooking.rentalPeriod')} <span className="text-danger">*</span>
                   </label>
                   <div style={{ display: 'flex', gap: '20px' }}>
                     <div className="form-check">
@@ -337,7 +339,7 @@ const RentalBooking = () => {
                         required
                       />
                       <label className="form-check-label" htmlFor="rentDays">
-                        Rent by Days
+                        {t('rentalBooking.rentByDays')}
                       </label>
                     </div>
                     <div className="form-check">
@@ -352,7 +354,7 @@ const RentalBooking = () => {
                         required
                       />
                       <label className="form-check-label" htmlFor="rentWeeks">
-                        Rent by Weeks
+                        {t('rentalBooking.rentByWeeks')}
                       </label>
                     </div>
                   </div>
@@ -363,14 +365,14 @@ const RentalBooking = () => {
                 <div className="row">
                   <div className="form-group">
                     <label htmlFor="days">
-                      Number of {rentalPeriod} <span className="text-danger">*</span>
+                      {t('rentalBooking.numberOfDays')} <span className="text-danger">*</span>
                     </label>
                     <input
                       type="number" // Numeric input type
                       name="days" // Form field name
                       className="form-control" // Bootstrap form control class
                       id="days" // Input ID for label association
-                      placeholder={`Number of ${rentalPeriod} to rent`} // Dynamic placeholder
+                      placeholder={t('rentalBooking.numberOfDaysPlaceholder', { period: rentalPeriod === 'weeks' ? t('rentalBooking.weeks') : t('rentalBooking.days') })} // Dynamic placeholder
                       value={days} // Controlled component value
                       onChange={handleDaysChange} // Change event handler
                       min="1" // Minimum value constraint
@@ -378,8 +380,8 @@ const RentalBooking = () => {
                     />
                     <small className="form-text text-muted">
                       {rentalPeriod === 'weeks'
-                        ? `Equivalent to ${days * 7} days of rental`
-                        : `${days} day(s) of rental`
+                        ? t('rentalBooking.equivalentDays', { days: days * 7 })
+                        : t('rentalBooking.daysOfRental', { days })
                       }
                     </small>
                   </div>
@@ -388,7 +390,7 @@ const RentalBooking = () => {
                 {/* Rental Start Date input */}
                 <div className="form-group">
                   <label htmlFor="startDate" style={{ fontWeight: '600', marginBottom: '8px' }}>
-                    Rental Start Date <span className="text-danger">*</span>
+                    {t('rentalBooking.startDate')} <span className="text-danger">*</span>
                   </label>
                   <input
                     type="date"
@@ -409,7 +411,7 @@ const RentalBooking = () => {
                     required
                   />
                   <small className="form-text text-muted" style={{ marginTop: '5px' }}>
-                    Select when you want the rental period to begin
+                    {t('rentalBooking.selectWhen')}
                   </small>
                 </div>
 
@@ -426,7 +428,7 @@ const RentalBooking = () => {
                     }}
                   >
                     <p style={{ margin: 0, color: '#155724', fontWeight: 'bold', fontSize: '14px' }}>
-                      📅 Your rental will end on: {formatDisplayDate(calculatedEndDate)}
+                      📅 {t('rentalBooking.rentalEndsOn')} {formatDisplayDate(calculatedEndDate)}
                     </p>
                   </div>
                 )}
@@ -434,13 +436,13 @@ const RentalBooking = () => {
                 {/* Delivery location input */}
                 {/* Place of delivery input */}
                 <div className="form-group">
-                  <label htmlFor="place">Place <span className="text-danger">*</span></label>
+                  <label htmlFor="place">{t('rentalBooking.place')} <span className="text-danger">*</span></label>
                   <input
                     type="text" // Text input type
                     name="place" // Form field name
                     className="form-control" // Bootstrap form control class
                     id="place" // Input ID for label association
-                    placeholder="Place of delivery" // Placeholder text
+                    placeholder={t('rentalBooking.placeOfDelivery')} // Placeholder text
                     required // HTML5 required attribute
                   />
                 </div>
@@ -449,7 +451,7 @@ const RentalBooking = () => {
                 {/* Contact phone number input */}
                 {/* Phone number input */}
                 <div className="form-group">
-                  <label htmlFor="phone">Phone Number (Oman) <span className="text-danger">*</span></label>
+                  <label htmlFor="phone">{t('rentalBooking.phoneNumber')} <span className="text-danger">*</span></label>
                   <input
                     type="tel" // Telephone input type for better mobile experience
                     name="phone" // Form field name
@@ -463,7 +465,7 @@ const RentalBooking = () => {
                     required // HTML5 required attribute
                   />
                   <small className="form-text text-muted">
-                    Please enter an 8-digit Oman number starting with 7 or 9
+                    {t('rentalBooking.phoneHint')}
                   </small>
                 </div>
 
@@ -471,13 +473,13 @@ const RentalBooking = () => {
                 {/* Optional additional comments/instructions */}
                 {/* Optional comments */}
                 <div className="form-group">
-                  <label htmlFor="message">Comments</label>
+                  <label htmlFor="message">{t('rentalBooking.comments')}</label>
                   <textarea
                     name="message" // Form field name
                     className="form-control" // Bootstrap form control class
                     id="message" // Textarea ID for label association
                     rows="4" // Visible rows count
-                    placeholder="Your Comments" // Placeholder text
+                    placeholder={t('rentalBooking.yourComments')} // Placeholder text
                   ></textarea>
                 </div>
 
@@ -495,7 +497,7 @@ const RentalBooking = () => {
                       required // HTML5 required attribute
                     />
                     <label className="form-check-label" htmlFor="agreement">
-                      I agree to the terms and conditions regarding the refundable insurance deposit
+                      {t('rentalBooking.agreeToTerms')}
                     </label>
                   </div>
                 </div>
@@ -513,7 +515,7 @@ const RentalBooking = () => {
                     cursor: (agreedToTerms && phoneNumber.length === 8 && startDate) ? 'pointer' : 'not-allowed' // Cursor feedback
                   }}
                 >
-                  PROCEED TO PAYMENT {/* Button text */}
+                  {t('rentalBooking.proceedToPayment')} {/* Button text */}
                 </button>
               </form>
             </div>

@@ -7,10 +7,12 @@ import Footer from '../sections/Footer';
 import Header from '../sections/Header';
 // Import React Router hooks for navigation and accessing route state
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 
 // Main Payment component for handling payment information and processing
 const Payment = () => {
+  const { t } = useTranslation();
   // Navigation hook to programmatically navigate to different routes
   const navigate = useNavigate();
   // Location hook to access state passed from previous route (RentalBooking page)
@@ -195,7 +197,7 @@ const Payment = () => {
     if (value.length > 0 && value.length !== 3) {
       setErrors(prev => ({ 
         ...prev, 
-        cvv: 'CVV must be exactly 3 digits' 
+        cvv: t('payment.cvvError') 
       }));
     } else {
       setErrors(prev => ({ ...prev, cvv: '' }));
@@ -235,9 +237,9 @@ const Payment = () => {
       let error = '';
       
       if (month < 1 || month > 12) {
-        error = 'Invalid month';
+        error = t('payment.invalidMonth');
       } else if (year < currentYear || (year === currentYear && month < currentMonth)) {
-        error = 'Card has expired';
+        error = t('payment.cardExpired');
       }
 
       setErrors(prev => ({ ...prev, expiryDate: error }));
@@ -270,7 +272,7 @@ const Payment = () => {
     if ((formData.paymentMethod === 'credit' || formData.paymentMethod === 'debit') && formData.cardNumber) {
       const rawCardNumber = formData.cardNumber.replace(/\s/g, '').replace(/\D/g, '');
       if (rawCardNumber.length !== 16) {
-        newErrors.cardNumber = 'Card number must be exactly 16 digits';
+        newErrors.cardNumber = t('payment.cardNumberError');
       }
     }
 
@@ -278,7 +280,7 @@ const Payment = () => {
     if ((formData.paymentMethod === 'credit' || formData.paymentMethod === 'debit') && formData.cvv) {
       const rawCvv = formData.cvv.replace(/\D/g, '');
       if (rawCvv.length !== 3) {
-        newErrors.cvv = 'CVV must be exactly 3 digits';
+        newErrors.cvv = t('payment.cvvError');
       }
     }
 
@@ -388,11 +390,11 @@ const Payment = () => {
                   ...getAnimationStyle('orderSummary') // Apply dynamic animation styles
                 }}
               >
-                <h5 style={{ color: '#7B4F2C', margin: '0 0 15px 0', fontSize: '18px' }}>Order Summary</h5>
-                <p style={{ margin: '8px 0' }}><strong>Item:</strong> {appliance.name}</p>
+                <h5 style={{ color: '#7B4F2C', margin: '0 0 15px 0', fontSize: '18px' }}>{t('payment.orderSummary')}</h5>
+                <p style={{ margin: '8px 0' }}><strong>{t('payment.item')}</strong> {appliance.name}</p>
                 <p style={{ margin: '8px 0' }}>
-                  <strong>Rental Duration:</strong> {days} {rentalPeriod}(s)
-                  {rentalPeriod === 'weeks' && ` (${days * 7} days)`}
+                  <strong>{t('payment.rentalDuration')}</strong> {days} {rentalPeriod === 'weeks' ? t('rentalBooking.weeks') : t('rentalBooking.days')}
+                  {rentalPeriod === 'weeks' && ` (${days * 7} ${t('rentalBooking.days')})`}
                 </p>
 
                 {/* Conditional rendering - show rental period if dates are available */}
@@ -405,24 +407,24 @@ const Payment = () => {
                     borderRadius: '8px',
                     borderLeft: '4px solid #7B4F2C' // Brand color accent
                   }}>
-                    <p style={{ margin: '5px 0', fontWeight: 'bold', color: '#7B4F2C' }}>Rental Period:</p>
+                    <p style={{ margin: '5px 0', fontWeight: 'bold', color: '#7B4F2C' }}>{t('payment.rentalPeriod')}</p>
                     <p style={{ margin: '4px 0', fontSize: '14px' }}>
-                      <strong>Start:</strong> {formatDisplayDate(startDate)}
+                      <strong>{t('payment.start')}</strong> {formatDisplayDate(startDate)}
                     </p>
                     <p style={{ margin: '4px 0', fontSize: '14px' }}>
-                      <strong>End:</strong> {formatDisplayDate(endDate)}
+                      <strong>{t('payment.end')}</strong> {formatDisplayDate(endDate)}
                     </p>
                     <p style={{ margin: '4px 0', fontSize: '12px', color: '#6c757d', fontStyle: 'italic' }}>
-                      Please return the item by end of day on {formatDisplayDate(endDate)}
+                      {t('payment.returnBy')} {formatDisplayDate(endDate)}
                     </p>
                   </div>
                 )}
 
-                <p style={{ margin: '8px 0' }}><strong>Rental Amount:</strong> {totalAmount} OMR</p>
-                <p style={{ margin: '8px 0' }}><strong>Insurance Deposit:</strong> 20 OMR</p>
+                <p style={{ margin: '8px 0' }}><strong>{t('payment.rentalAmount')}</strong> {totalAmount} OMR</p>
+                <p style={{ margin: '8px 0' }}><strong>{t('payment.insuranceDeposit')}</strong> 20 OMR</p>
                 <hr style={{ margin: '15px 0', borderColor: '#dee2e6' }} />
                 <h5 style={{ color: '#7B4F2C', margin: '10px 0 0 0', fontSize: '20px' }}>
-                  Final Amount: {finalAmount || (totalAmount + 20)} OMR
+                  {t('payment.finalAmount')} {finalAmount || (totalAmount + 20)} OMR
                 </h5>
               </div>
             )}
@@ -433,7 +435,7 @@ const Payment = () => {
               {/* Email input field */}
               <div className="form-group">
                 <label htmlFor="email" style={{ fontWeight: '600', marginBottom: '8px' }}>
-                  Email <span className="text-danger">*</span>
+                  {t('payment.email')} <span className="text-danger">*</span>
                 </label>
                 <input
                   type="email" // HTML5 email input with validation
@@ -460,7 +462,7 @@ const Payment = () => {
               {/* Payment method selection dropdown */}
               <div className="form-group">
                 <label htmlFor="paymentMethod" style={{ fontWeight: '600', marginBottom: '8px' }}>
-                  Payment Method <span className="text-danger">*</span>
+                  {t('payment.paymentMethod')} <span className="text-danger">*</span>
                 </label>
                 <select
                   id="paymentMethod"
@@ -483,10 +485,10 @@ const Payment = () => {
                   onBlur={handleBlur}
                   required
                 >
-                  <option value="">Select Payment Method</option>
-                  <option value="credit">Credit Card</option>
-                  <option value="debit">Debit Card</option>
-                  <option value="bank">Bank Transfer</option>
+                  <option value="">{t('payment.selectPaymentMethod')}</option>
+                  <option value="credit">{t('payment.creditCard')}</option>
+                  <option value="debit">{t('payment.debitCard')}</option>
+                  <option value="bank">{t('payment.bankTransfer')}</option>
                 </select>
               </div>
 
@@ -501,7 +503,7 @@ const Payment = () => {
                   {/* Card number input with auto-formatting */}
                   <div className="form-group">
                     <label htmlFor="cardNumber" style={{ fontWeight: '600', marginBottom: '8px' }}>
-                      Card Number <span className="text-danger">*</span>
+                      {t('payment.cardNumber')} <span className="text-danger">*</span>
                     </label>
                     <input
                       type="text"
@@ -531,7 +533,7 @@ const Payment = () => {
                       </div>
                     )}
                     <small className="form-text text-muted" style={{ marginTop: '5px' }}>
-                      Must be exactly 16 digits
+                      {t('payment.cardNumberHint')}
                     </small>
                   </div>
 
@@ -540,7 +542,7 @@ const Payment = () => {
                     {/* Expiry date input with auto-formatting and validation */}
                     <div className="form-group col-md-6">
                       <label htmlFor="expiryDate" style={{ fontWeight: '600', marginBottom: '8px' }}>
-                        Expiry Date <span className="text-danger">*</span>
+                        {t('payment.expiryDate')} <span className="text-danger">*</span>
                       </label>
                       <input
                         type="text"
@@ -575,7 +577,7 @@ const Payment = () => {
                     {/* CVV security code input */}
                     <div className="form-group col-md-6">
                       <label htmlFor="cvv" style={{ fontWeight: '600', marginBottom: '8px' }}>
-                        CVV <span className="text-danger">*</span>
+                        {t('payment.cvv')} <span className="text-danger">*</span>
                       </label>
                       <input
                         type="text"
@@ -604,7 +606,7 @@ const Payment = () => {
                         </div>
                       )}
                       <small className="form-text text-muted" style={{ marginTop: '5px' }}>
-                        Must be exactly 3 digits
+                        {t('payment.cvvHint')}
                       </small>
                     </div>
                   </div>
@@ -627,15 +629,15 @@ const Payment = () => {
                     animation: 'slideInLeft 0.5s ease-out' // Slide-in animation
                   }}
                 >
-                  <h6 style={{ color: '#004085', marginBottom: '15px', fontSize: '16px' }}>Bank Transfer Instructions</h6>
+                  <h6 style={{ color: '#004085', marginBottom: '15px', fontSize: '16px' }}>{t('payment.bankTransferInstructions')}</h6>
                   <p style={{ margin: '8px 0', fontSize: '14px' }}>
-                    <strong>Bank Name:</strong> AppliRent Services
+                    <strong>{t('payment.bankName')}</strong> AppliRent Services
                   </p>
                   <p style={{ margin: '8px 0', fontSize: '14px' }}>
-                    <strong>Account Number:</strong> 1234 5678 9012
+                    <strong>{t('payment.accountNumber')}</strong> 1234 5678 9012
                   </p>
                   <p style={{ margin: '8px 0', fontSize: '14px' }}>
-                    <strong>IBAN:</strong> OM12 1234 5678 9012 3456
+                    <strong>{t('payment.iban')}</strong> OM12 1234 5678 9012 3456
                   </p>
                   <p style={{ margin: '10px 0 0 0', fontSize: '13px', color: '#856404', fontStyle: 'italic' }}>
                     Please include your full name as reference. Rental will be confirmed once payment is received.
@@ -691,7 +693,7 @@ const Payment = () => {
                       animation: 'spin 1s linear infinite', // Rotating animation
                       marginRight: '10px'
                     }}></div>
-                    Processing Payment... {/* Loading text */}
+                    {t('payment.processing')} {/* Loading text */}
                   </div>
                 ) : (
                   // Normal state with payment amount

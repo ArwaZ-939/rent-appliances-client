@@ -6,8 +6,10 @@ import axios from 'axios';
 import { DarkModeContext } from '../sections/DarkModeContext';
 import { Input, Button } from 'reactstrap';
 import contact from '../assets/contact.webp';
+import { useTranslation } from 'react-i18next';
 
 const Contact = () => {
+  const { t } = useTranslation();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -123,9 +125,9 @@ const Contact = () => {
     yesterday.setDate(yesterday.getDate() - 1);
 
     if (date.toDateString() === today.toDateString()) {
-      return 'Today';
+      return t('common.today');
     } else if (date.toDateString() === yesterday.toDateString()) {
-      return 'Yesterday';
+      return t('common.yesterday');
     } else {
       return date.toLocaleDateString('en-US', { 
         month: 'short', 
@@ -182,10 +184,10 @@ const Contact = () => {
             }}>
               <h2 style={{ color: '#7B4F2C', margin: 0 }}>
                 <i className="bi bi-chat-dots-fill me-2"></i>
-                Customer Support Chat
+                {t('contact.title')}
               </h2>
               <p style={{ color: darkMode ? '#aaa' : '#666', margin: '5px 0 0 0', fontSize: '14px' }}>
-                Chat with our support team
+                {t('contact.title')}
               </p>
             </div>
 
@@ -209,7 +211,7 @@ const Contact = () => {
                 color: darkMode ? '#aaa' : '#666'
               }}>
                 <i className="bi bi-chat-left-text" style={{ fontSize: '48px', marginBottom: '15px', display: 'block' }}></i>
-                <p>No messages yet. Start the conversation!</p>
+                <p>{t('contact.noMessages')}</p>
                 <p style={{ fontSize: '12px', marginTop: '10px', opacity: 0.7 }}>
                   Your messages will be sent to our support team
                 </p>
@@ -273,7 +275,7 @@ const Contact = () => {
               type="text"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Type your message..."
+              placeholder={t('contact.typeMessage')}
               className={darkMode ? 'bg-dark text-light border-secondary' : ''}
               disabled={loading || !username}
               style={{ flex: 1 }}
@@ -294,7 +296,7 @@ const Contact = () => {
               ) : (
                 <>
                   <i className="bi bi-send-fill me-2"></i>
-                  Send
+                  {t('contact.sendMessage')}
                 </>
               )}
             </Button>

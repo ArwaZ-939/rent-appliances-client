@@ -5,10 +5,12 @@ import { useState, useEffect } from 'react'; // React hooks for state management
 import { useLocation } from 'react-router-dom'; // Hook to access route state
 import axios from 'axios'; // For API calls
 import '../css/Delivery.css'; // CSS styles for delivery page animations, form styling, and layout
+import { useTranslation } from 'react-i18next';
 
 
 // Main Delivery component for handling delivery information, form validation, and order tracking
 const Delivery = () => {
+  const { t } = useTranslation();
   const location = useLocation(); // Get order data from previous route
   const orderData = location.state || {}; // Order data from Payment page
   
@@ -90,33 +92,33 @@ const Delivery = () => {
     // Switch statement handles different validation rules for each field type
     switch (name) {
       case 'area':
-        if (!value.trim()) error = 'Area is required'; // Check for empty value
-        else if (!/^[a-zA-Z\s\-']+$/.test(value)) error = 'Area should contain only letters and spaces'; // Alpha characters only
+        if (!value.trim()) error = t('delivery.areaRequired'); // Check for empty value
+        else if (!/^[a-zA-Z\s\-']+$/.test(value)) error = t('delivery.areaInvalid'); // Alpha characters only
         break;
 
       case 'city':
-        if (!value.trim()) error = 'City is required'; // Check for empty value
-        else if (!/^[a-zA-Z\s\-']+$/.test(value)) error = 'City should contain only letters and spaces'; // Alpha characters only
+        if (!value.trim()) error = t('delivery.cityRequired'); // Check for empty value
+        else if (!/^[a-zA-Z\s\-']+$/.test(value)) error = t('delivery.cityInvalid'); // Alpha characters only
         break;
 
       case 'street':
-        if (!value.trim()) error = 'Street address is required'; // Check for empty value
-        else if (value.length < 5) error = 'Street address is too short'; // Minimum length requirement
+        if (!value.trim()) error = t('delivery.streetRequired'); // Check for empty value
+        else if (value.length < 5) error = t('delivery.streetTooShort'); // Minimum length requirement
         break;
 
       case 'number':
-        if (!value.trim()) error = 'House number is required'; // Check for empty value
-        else if (!/^[0-9a-zA-Z\s\-\/#.,]+$/.test(value)) error = 'Enter a valid house/apartment number'; // Alphanumeric with dashes/slashes
+        if (!value.trim()) error = t('delivery.numberRequired'); // Check for empty value
+        else if (!/^[0-9a-zA-Z\s\-\/#.,]+$/.test(value)) error = t('delivery.numberInvalid'); // Alphanumeric with dashes/slashes
         break;
 
       case 'zipCode':
-        if (!value.trim()) error = 'Zip code is required'; // Check for empty value
-        else if (!/^\d{3}$/.test(value.replace(/\s/g, ''))) error = 'Enter a valid zip code (3 digits)';
+        if (!value.trim()) error = t('delivery.zipRequired'); // Check for empty value
+        else if (!/^\d{3}$/.test(value.replace(/\s/g, ''))) error = t('delivery.zipInvalid');
         break;
 
       case 'phone':
-        if (!value.trim()) error = 'Phone number is required'; // Check for empty value
-        else if (!/^[79]\d{7}$/.test(value.replace(/\s/g, ''))) error = 'Enter a valid Oman phone number (8 digits starting with 7 or 9)'; // Oman phone format
+        if (!value.trim()) error = t('delivery.phoneRequired'); // Check for empty value
+        else if (!/^[79]\d{7}$/.test(value.replace(/\s/g, ''))) error = t('delivery.phoneInvalid'); // Oman phone format
         break;
 
       default:
@@ -308,6 +310,10 @@ const Delivery = () => {
       const response = await axios.post('http://localhost:5000/addOrder', orderToSave);
       console.log('Order saved successfully:', response.data);
 
+      // Notify other components that appliances have been updated
+      localStorage.setItem('applianceUpdated', Date.now().toString());
+      window.dispatchEvent(new Event('storage'));
+
       setIsSubmitting(false); // Clear loading state after processing
       setShowSuccess(true); // Show success message and trigger timeline animation
 
@@ -411,13 +417,13 @@ const Delivery = () => {
 
           {/* Main delivery form section */}
           <div className="contact-form">
-            <h2 style={{ color: '#7B4F2C' }}>Delivery Information</h2> {/* Page heading with brand color consistency */}
+            <h2 style={{ color: '#7B4F2C' }}>{t('delivery.title')}</h2> {/* Page heading with brand color consistency */}
 
             {/* Conditional rendering - success message appears after form submission */}
             {/* Success Animation */}
             {showSuccess && (
               <div className="success-animation">
-                <p className="success-text">Delivery Scheduled Successfully! 🎉</p> {/* Success message with celebration emoji */}
+                <p className="success-text">{t('delivery.deliveryScheduled')}</p> {/* Success message with celebration emoji */}
               </div>
             )}
 
@@ -429,7 +435,7 @@ const Delivery = () => {
               <div className="row">
                 <div className="form-group col-md-6">
                   <label htmlFor="area" className="form-label">
-                    Area <span className="text-danger">*</span> {/* Required field indicator */}
+                    {t('delivery.area')} <span className="text-danger">*</span> {/* Required field indicator */}
                   </label>
                   <input
                     type="text"
@@ -448,7 +454,7 @@ const Delivery = () => {
 
                 <div className="form-group col-md-6">
                   <label htmlFor="city" className="form-label">
-                    City <span className="text-danger">*</span> {/* Required field indicator */}
+                    {t('delivery.city')} <span className="text-danger">*</span> {/* Required field indicator */}
                   </label>
                   <input
                     type="text"
@@ -470,7 +476,7 @@ const Delivery = () => {
               {/* Street Address */}
               <div className="form-group">
                 <label htmlFor="street" className="form-label">
-                  Street Address <span className="text-danger">*</span> {/* Required field indicator */}
+                  {t('delivery.street')} <span className="text-danger">*</span> {/* Required field indicator */}
                 </label>
                 <input
                   type="text"
@@ -495,7 +501,7 @@ const Delivery = () => {
               <div className="row">
                 <div className="form-group col-md-6">
                   <label htmlFor="number" className="form-label">
-                    House/Apartment Number <span className="text-danger">*</span> {/* Required field indicator */}
+                    {t('delivery.number')} <span className="text-danger">*</span> {/* Required field indicator */}
                   </label>
                   <input
                     type="text"
@@ -514,7 +520,7 @@ const Delivery = () => {
 
                 <div className="form-group col-md-6">
                   <label htmlFor="zipCode" className="form-label">
-                    Zip/Postal Code <span className="text-danger">*</span> {/* Required field indicator */}
+                    {t('delivery.zipCode')} <span className="text-danger">*</span> {/* Required field indicator */}
                   </label>
                   <input
                     type="text"
@@ -538,7 +544,7 @@ const Delivery = () => {
               {/* Phone Number */}
               <div className="form-group">
                 <label htmlFor="phone" className="form-label">
-                  Phone Number (Oman) <span className="text-danger">*</span> {/* Required field indicator */}
+                  {t('delivery.phone')} <span className="text-danger">*</span> {/* Required field indicator */}
                 </label>
                 <input
                   type="tel"
@@ -556,7 +562,7 @@ const Delivery = () => {
                 />
                 {errors.phone && <div className="invalid-feedback">{errors.phone}</div>}
                 <small className="form-text text-muted">
-                  Please enter an 8-digit Oman number starting with 7 or 9 {/* Purpose explanation */}
+                  {t('delivery.phoneHint')} {/* Purpose explanation */}
                 </small>
               </div>
 
@@ -610,7 +616,7 @@ const Delivery = () => {
               {isSubmitting && (
                 <div className="loading-animation">
                   <div className="loading-spinner"></div> {/* Animated spinner visual */}
-                  <p>Processing your delivery request...</p> {/* Loading state message */}
+                  <p>{t('delivery.processingRequest')}</p> {/* Loading state message */}
                 </div>
               )}
 
@@ -626,10 +632,10 @@ const Delivery = () => {
                   {isSubmitting ? (
                     <>
                       <span className="spinner-border spinner-border-sm me-2" role="status"></span> {/* Bootstrap spinner */}
-                      Processing... {/* Loading state button text */}
+                      {t('delivery.processing')} {/* Loading state button text */}
                     </>
                   ) : (
-                    'Confirm Delivery & Proceed' /* Default button text with clear action */
+                    t('delivery.confirmOrder') /* Default button text with clear action */
                   )}
                 </button>
                 <small className="form-text text-muted d-block mt-2">

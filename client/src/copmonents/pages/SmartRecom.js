@@ -7,8 +7,10 @@ import Footer from '../sections/Footer';
 import { DarkModeContext } from '../sections/DarkModeContext';
 import { useNavigate } from 'react-router-dom';
 import '../css/Contact.css';
+import { useTranslation } from 'react-i18next';
 
 const SmartRecom = () => {
+    const { t, i18n } = useTranslation();
     const [budget, setBudget] = useState('');
     const [appliances, setAppliances] = useState([]);
     const [recommendations, setRecommendations] = useState([]);
@@ -16,6 +18,73 @@ const SmartRecom = () => {
     const [submitted, setSubmitted] = useState(false);
     const { darkMode } = useContext(DarkModeContext);
     const navigate = useNavigate();
+
+    // Translation mapping for appliance names and details (same as AppliancesCatalog)
+    const getApplianceTranslation = (appliance) => {
+        const isArabic = i18n.language === 'ar';
+        
+        // If appliance has translation fields in database, use them
+        if (isArabic && appliance.name_ar) {
+            return {
+                name: appliance.name_ar,
+                details: appliance.details_ar || appliance.details
+            };
+        }
+        
+        // Fallback: Use translation mapping for common appliances
+        const translationMap = {
+            'Washing Machine': {
+                name: 'غسالة',
+                details: 'غسالة عالية الجودة لتنظيف ملابسك بكفاءة'
+            },
+            'Refrigerator': {
+                name: 'ثلاجة',
+                details: 'ثلاجة حديثة لحفظ الطعام طازجًا'
+            },
+            'Microwave': {
+                name: 'ميكروويف',
+                details: 'ميكروويف سريع لتسخين الطعام'
+            },
+            'Dishwasher': {
+                name: 'غسالة صحون',
+                details: 'غسالة صحون تلقائية لتنظيف الأطباق'
+            },
+            'Air Conditioner': {
+                name: 'مكيف هواء',
+                details: 'مكيف هواء لتبريد منزلك'
+            },
+            'Television': {
+                name: 'تلفزيون',
+                details: 'تلفزيون عالي الجودة للترفيه'
+            },
+            'Vacuum Cleaner': {
+                name: 'مكنسة كهربائية',
+                details: 'مكنسة كهربائية قوية لتنظيف منزلك'
+            },
+            'Oven': {
+                name: 'فرن',
+                details: 'فرن للطبخ والخبز'
+            },
+            'Blender': {
+                name: 'خلاط',
+                details: 'خلاط قوي لتحضير العصائر'
+            },
+            'Coffee Maker': {
+                name: 'آلة قهوة',
+                details: 'آلة قهوة لتحضير القهوة الطازجة'
+            }
+        };
+        
+        if (isArabic && translationMap[appliance.name]) {
+            return translationMap[appliance.name];
+        }
+        
+        // Default: return original
+        return {
+            name: appliance.name,
+            details: appliance.details
+        };
+    };
 
     // Fetch all appliances on component mount
     useEffect(() => {
@@ -91,7 +160,7 @@ const SmartRecom = () => {
         const budgetValue = parseInt(budget);
         
         if (!budget || budgetValue <= 0) {
-            alert('Please enter a valid budget greater than 0');
+            alert(t('smartRecom.invalidBudget'));
             return;
         }
         
@@ -150,7 +219,7 @@ const SmartRecom = () => {
                         fontWeight: 'bold'
                     }}>
                         <i className="bi bi-lightbulb-fill me-2" style={{ color: '#ffc107' }}></i>
-                        Recommendation System
+                        {t('smartRecom.title')}
                     </h2>
                     <p style={{ 
                         textAlign: 'center', 
@@ -160,7 +229,7 @@ const SmartRecom = () => {
                         maxWidth: '600px',
                         margin: '0 auto 30px'
                     }}>
-                        Enter your budget and we'll recommend the perfect appliances tailored for you!
+                        {t('smartRecom.subtitle')}
                     </p>
 
                     {/* Input Form */}
@@ -170,14 +239,14 @@ const SmartRecom = () => {
                                 <FormGroup>
                                     <Label htmlFor="budget" style={{ fontWeight: 'bold', color: darkMode ? '#fff' : '#333', marginBottom: '10px' }}>
                                         <i className="bi bi-currency-exchange me-2"></i>
-                                        Budget (OMR) <span className="text-danger">*</span>
+                                        {t('smartRecom.budget')} <span className="text-danger">*</span>
                                     </Label>
                                     <Input
                                         type="number"
                                         id="budget"
                                         value={budget}
                                         onChange={(e) => setBudget(e.target.value)}
-                                        placeholder="Enter your budget amount"
+                                        placeholder={t('smartRecom.budgetPlaceholder')}
                                         min="1"
                                         step="1"
                                         className={darkMode ? 'bg-dark text-light border-secondary' : ''}
@@ -201,7 +270,7 @@ const SmartRecom = () => {
                                 }}
                             >
                                 <i className="bi bi-search me-2"></i>
-                                Get Recommendations
+                                {t('smartRecom.getRecommendations')}
                             </Button>
                         </div>
                     </form>
@@ -210,10 +279,10 @@ const SmartRecom = () => {
                     {loading && (
                         <div style={{ textAlign: 'center', padding: '40px' }}>
                             <div className="spinner-border text-primary" role="status">
-                                <span className="sr-only">Loading...</span>
+                                <span className="sr-only">{t('smartRecom.loading')}</span>
                             </div>
                             <p style={{ marginTop: '15px', color: darkMode ? '#ccc' : '#666' }}>
-                                Analyzing your needs and finding the best recommendations...
+                                {t('smartRecom.analyzing')}
                             </p>
                         </div>
                     )}
@@ -230,11 +299,14 @@ const SmartRecom = () => {
                             }}>
                                 <h3 style={{ color: '#7B4F2C', marginBottom: '10px' }}>
                                     <i className="bi bi-star-fill me-2" style={{ color: '#ffc107' }}></i>
-                                    Recommended Appliances for You
+                                    {t('smartRecom.recommendedAppliances')}
                                 </h3>
                                 {recommendations.length > 0 && (
                                     <p style={{ color: darkMode ? '#aaa' : '#666', margin: 0, fontSize: '14px' }}>
-                                        Found <strong>{recommendations.length}</strong> appliance{recommendations.length !== 1 ? 's' : ''} within your budget of <strong>{formatPrice(budget)}</strong>
+                                        {i18n.language === 'ar' 
+                                            ? `تم العثور على ${recommendations.length} ${recommendations.length !== 1 ? 'أجهزة' : 'جهاز'} ضمن ميزانيتك البالغة ${formatPrice(budget)}`
+                                            : `Found ${recommendations.length} appliance${recommendations.length !== 1 ? 's' : ''} within your budget of ${formatPrice(budget)}`
+                                        }
                                     </p>
                                 )}
                             </div>
@@ -286,7 +358,7 @@ const SmartRecom = () => {
                                                             fontWeight: 'bold',
                                                             minHeight: '50px'
                                                         }}>
-                                                            {appliance.name}
+                                                            {getApplianceTranslation(appliance).name}
                                                         </CardTitle>
                                                         <div style={{
                                                             backgroundColor: darkMode ? 'rgba(123, 79, 44, 0.15)' : 'rgba(123, 79, 44, 0.1)',
@@ -296,7 +368,7 @@ const SmartRecom = () => {
                                                         }}>
                                                             <CardText style={{ fontSize: '15px', margin: 0, fontWeight: 'bold', color: '#7B4F2C' }}>
                                                                 <i className="bi bi-tag-fill me-2"></i>
-                                                                {formatPrice(appliance.price)} / day
+                                                                {formatPrice(appliance.price)} {t('smartRecom.perDay')}
                                                             </CardText>
                                                         </div>
                                                         <CardText style={{ 
@@ -305,13 +377,13 @@ const SmartRecom = () => {
                                                             lineHeight: '1.5',
                                                             minHeight: '60px'
                                                         }}>
-                                                            {appliance.details}
+                                                            {getApplianceTranslation(appliance).details}
                                                         </CardText>
                                                     </div>
                                                     <div className="mt-3">
                                                         <CardText className={appliance.available ? 'text-success mb-2' : 'text-danger mb-2'} style={{ fontWeight: '500' }}>
                                                             <i className={`bi ${appliance.available ? 'bi-check-circle-fill' : 'bi-x-circle-fill'} me-2`}></i>
-                                                            {appliance.available ? 'Available' : 'Unavailable'}
+                                                            {appliance.available ? t('catalog.available') : t('smartRecom.unavailable')}
                                                         </CardText>
                                                         <Button
                                                             color="primary"
@@ -337,7 +409,7 @@ const SmartRecom = () => {
                                                             }}
                                                         >
                                                             <i className="bi bi-cart-plus me-2"></i>
-                                                            Rent Now
+                                                            {t('catalog.rentNow')}
                                                         </Button>
                                                     </div>
                                                 </CardBody>
@@ -359,13 +431,13 @@ const SmartRecom = () => {
                                         marginBottom: '10px',
                                         fontWeight: 'bold'
                                     }}>
-                                        No Recommendations Found
+                                        {t('smartRecom.noRecommendations')}
                                     </h4>
                                     <p style={{ fontSize: '16px', color: darkMode ? '#aaa' : '#666', marginBottom: '20px' }}>
-                                        We couldn't find any available appliances within your budget of <strong>{formatPrice(budget)}</strong>.
+                                        {t('smartRecom.noRecommendationsMessage', { budget: formatPrice(budget) })}
                                     </p>
                                     <p style={{ fontSize: '14px', color: darkMode ? '#888' : '#999' }}>
-                                        Try increasing your budget to see more options!
+                                        {t('smartRecom.tryIncreasingBudget')}
                                     </p>
                                 </div>
                             )}

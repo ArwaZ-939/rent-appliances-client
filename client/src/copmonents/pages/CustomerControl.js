@@ -19,6 +19,8 @@ const CustomerControl = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [userOrders, setUserOrders] = useState({}); // Store orders by username
+  const [searchSuggestions, setSearchSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   // Fetching user profile and users list from the Redux store
   const Profiler = 'https://static.vecteezy.com/system/resources/thumbnails/013/360/247/small/default-avatar-photo-icon-social-media-profile-sign-symbol-vector.jpg';
@@ -61,6 +63,30 @@ const CustomerControl = () => {
     };
     fetchUsers();
   }, []);
+
+  // Generate autocomplete suggestions
+  useEffect(() => {
+    if (searchTerm.trim() === '') {
+      setSearchSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    
+    const filtered = users
+      .filter(u => 
+        u.user?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        u.email?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .slice(0, 5)
+      .map(u => ({
+        display: `${u.user} (${u.email})`,
+        user: u.user,
+        email: u.email
+      }));
+    
+    setSearchSuggestions(filtered);
+    setShowSuggestions(filtered.length > 0);
+  }, [searchTerm, users]);
 
   // Handle user selection
   const handleUserSelect = (userId) => {
@@ -333,10 +359,70 @@ const CustomerControl = () => {
       <div className="container-admin">
         <div className="left-section-admin" style={{ width: '100%' }}>
           <h2>Customer Control</h2>
-          <InputGroup className="mb-3">
-            <Input type="text" placeholder="Search by name or email..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-            <InputGroupText className="bi bi-search" />
-          </InputGroup>
+          <div style={{ position: 'relative' }}>
+            <InputGroup className="mb-3">
+              <Input 
+                type="text" 
+                placeholder="Search by name or email..." 
+                value={searchTerm} 
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => {
+                  if (searchSuggestions.length > 0) {
+                    setShowSuggestions(true);
+                  }
+                }}
+                onBlur={() => {
+                  setTimeout(() => setShowSuggestions(false), 200);
+                }}
+                autoComplete="off"
+              />
+              <InputGroupText className="bi bi-search" />
+            </InputGroup>
+            
+            {/* Autocomplete Suggestions */}
+            {showSuggestions && searchSuggestions.length > 0 && (
+              <ul style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                zIndex: 1000,
+                background: '#fff',
+                border: '1px solid #ccc',
+                borderRadius: '8px',
+                listStyle: 'none',
+                padding: 0,
+                margin: '5px 0 0 0',
+                maxHeight: '200px',
+                overflowY: 'auto',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+              }}>
+                {searchSuggestions.map((item, idx) => (
+                  <li
+                    key={idx}
+                    onClick={() => {
+                      setSearchTerm(item.user);
+                      setShowSuggestions(false);
+                    }}
+                    style={{
+                      padding: '12px 15px',
+                      cursor: 'pointer',
+                      borderBottom: idx < searchSuggestions.length - 1 ? '1px solid #eee' : 'none',
+                      fontSize: '14px',
+                      transition: 'background-color 0.2s',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#f5f5f5'}
+                    onMouseLeave={e => e.currentTarget.style.background = '#fff'}
+                  >
+                    {item.display}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
           {loading ? (
             <div className="text-center my-4"><Spinner color="primary" /></div>
           ) : (
