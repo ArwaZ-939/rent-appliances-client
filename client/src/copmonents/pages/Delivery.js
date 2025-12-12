@@ -7,7 +7,6 @@ import axios from 'axios'; // For API calls
 import '../css/Delivery.css'; // CSS styles for delivery page animations, form styling, and layout
 import { useTranslation } from 'react-i18next';
 
-
 // Main Delivery component for handling delivery information, form validation, and order tracking
 const Delivery = () => {
   const { t } = useTranslation();
@@ -19,7 +18,7 @@ const Delivery = () => {
   const [showSuccess, setShowSuccess] = useState(false); // Controls visibility of success message and timeline
   const [currentStep, setCurrentStep] = useState(1); // Tracks current step in delivery timeline (1-5)
   const [progress, setProgress] = useState(0); // Tracks overall progress percentage (0-100%)
-  const [userEmail, setUserEmail] = useState(''); // User email for order
+  const [userInfo, setUserInfo] = useState({ email: '', user: '' }); // User info for notifications
 
   // State for form data with validation - stores all form field values
   const [formData, setFormData] = useState({
@@ -33,29 +32,30 @@ const Delivery = () => {
     message: '' // Optional delivery notes and instructions
   });
 
-
   // State for field validation errors - tracks validation messages for each field
   const [errors, setErrors] = useState({}); // Object storing error messages keyed by field name
   const [fieldFocus, setFieldFocus] = useState(''); // Tracks which form field currently has focus for visual styling
 
-  // Fetch user email on component mount
+  // Fetch user info on component mount
   useEffect(() => {
-    const fetchUserEmail = async () => {
+    const fetchUserInfo = async () => {
       const username = localStorage.getItem('username');
       if (username) {
         try {
           const response = await axios.get(`http://localhost:5000/getUserProfile/${username}`);
-          if (response.data && response.data.email) {
-            setUserEmail(response.data.email);
+          if (response.data) {
+            setUserInfo({
+              email: response.data.email,
+              user: response.data.user
+            });
           }
         } catch (error) {
-          console.error('Error fetching user email:', error);
+          console.error('Error fetching user info:', error);
         }
       }
     };
-    fetchUserEmail();
+    fetchUserInfo();
   }, []);
-
 
   // Effect hook to simulate automatic progress through delivery timeline steps
   // Simulate progress through timeline steps when success state becomes true
@@ -64,7 +64,6 @@ const Delivery = () => {
     if (showSuccess) {
       const steps = [1, 2, 3, 4]; // Steps to progress through (1-4, step 5 is final delivered state)
       let currentIndex = 0; // Track current position in steps array
-
 
       // Set up interval to automatically advance through timeline steps
       const interval = setInterval(() => {
@@ -77,12 +76,202 @@ const Delivery = () => {
         }
       }, 1500); // Advance to next step every 1.5 seconds for smooth progression
 
-
       // Cleanup function to clear interval when component unmounts or dependencies change
       return () => clearInterval(interval);
     }
   }, [showSuccess]); // Dependency array - effect runs only when showSuccess state changes
 
+  // Function to send Email using backend API
+  const sendEmail = async (toEmail, subject, message) => {
+    try {
+      console.log('Sending email to:', toEmail);
+      console.log('Email subject:', subject);
+      
+      // Use your backend API endpoint
+      const response = await fetch('http://localhost:5000/sendNotification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: userInfo.user || 'Customer',
+          notificationType: 'email',
+          message: message,
+          email: toEmail
+        })
+      });
+
+      console.log('Backend response status:', response.status);
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Email sent successfully via backend:', result);
+        return { success: true };
+      } else {
+        const errorText = await response.text();
+        console.error('Failed to send email via backend. Status:', response.status);
+        console.error('Error details:', errorText);
+        
+        return { success: false, error: `Status ${response.status}: ${errorText}` };
+      }
+    } catch (error) {
+      console.error('Error sending email via backend:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Function to send SMS using backend API
+  const sendSMS = async (toPhoneNumber, message) => {
+    try {
+      // Use your backend API endpoint
+      const response = await fetch('http://localhost:5000/sendNotification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: userInfo.user || 'Customer',
+          notificationType: 'sms',
+          message: message,
+          phoneNumber: toPhoneNumber
+        })
+      });
+
+      console.log('Backend response status:', response.status);
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('SMS sent successfully via backend:', result);
+        return { success: true };
+      } else {
+        const errorText = await response.text();
+        console.error('Failed to send SMS via backend. Status:', response.status);
+        console.error('Error details:', errorText);
+        
+        return { success: false, error: `Status ${response.status}: ${errorText}` };
+      }
+    } catch (error) {
+      console.error('Error sending SMS via backend:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Function to send delivery confirmation notifications based on user preferences
+  const sendDeliveryNotification = async (orderDetails) => {
+    // Get notification preferences from localStorage
+    const savedPreferences = localStorage.getItem('notificationPreferences');
+    let notificationPreferences = {
+      email: false,
+      sms: false,
+      phoneNumber: ''
+    };
+    
+    console.log('Delivery notification - Raw saved preferences from localStorage:', savedPreferences);
+    
+    if (savedPreferences) {
+      try {
+        notificationPreferences = JSON.parse(savedPreferences);
+        console.log('Delivery notification - Parsed notification preferences:', notificationPreferences);
+      } catch (error) {
+        console.error('Error parsing notification preferences:', error);
+        return false; // Don't send notifications if preferences can't be parsed
+      }
+    }
+    
+    // Check if user wants notifications
+    if (notificationPreferences.email || notificationPreferences.sms) {
+      // Prepare delivery confirmation message
+      const deliveryMessage = `Delivery Confirmed!\n\nDelivery Details:\n- Appliance: ${orderDetails.appliance}\n- Delivery Address: ${orderDetails.deliveryAddress.street}, ${orderDetails.deliveryAddress.area}, ${orderDetails.deliveryAddress.city}\n- Phone: ${orderDetails.deliveryAddress.phone}\n- Preferred Time: ${formData.preferredTime === 'morning' ? 'Morning (9 AM - 12 PM)' : formData.preferredTime === 'afternoon' ? 'Afternoon (12 PM - 5 PM)' : 'Evening (5 PM - 8 PM)'}\n- Estimated Delivery: Within 2 business days\n- Order Status: Confirmed & Processing\n\nYour appliance will be delivered within 2 business days. Our team will contact you 1 hour before delivery. Thank you for choosing AppliRent!`;
+      
+      console.log('Delivery notification - User preferences:', {
+        email: notificationPreferences.email,
+        sms: notificationPreferences.sms,
+        hasEmail: !!userInfo.email,
+        hasPhone: !!notificationPreferences.phoneNumber,
+        userEmail: userInfo.email,
+        userPhone: notificationPreferences.phoneNumber
+      });
+      
+      const promises = [];
+      
+      // Send email notification
+      if (notificationPreferences.email && userInfo.email) {
+        console.log('Delivery notification - Attempting to send email to:', userInfo.email);
+        promises.push(
+          sendEmail(
+            userInfo.email,
+            'Delivery Confirmation - AppliRent',
+            deliveryMessage
+          ).then(result => {
+            console.log('Delivery notification - Email send result:', result);
+            return result;
+          }).catch(error => {
+            console.error('Failed to send delivery email notification:', error);
+            return { success: false, error: error.message };
+          })
+        );
+      } else if (notificationPreferences.email && !userInfo.email) {
+        console.log('Delivery notification - Email notifications enabled but no user email found');
+      }
+      
+      // Send SMS notification
+      if (notificationPreferences.sms && notificationPreferences.phoneNumber) {
+        console.log('Delivery notification - Attempting to send SMS to:', notificationPreferences.phoneNumber);
+        promises.push(
+          sendSMS(
+            notificationPreferences.phoneNumber,
+            deliveryMessage
+          ).then(result => {
+            console.log('Delivery notification - SMS send result:', result);
+            return result;
+          }).catch(error => {
+            console.error('Failed to send delivery SMS notification:', error);
+            return { success: false, error: error.message };
+          })
+        );
+      } else if (notificationPreferences.sms && !notificationPreferences.phoneNumber) {
+        console.log('Delivery notification - SMS notifications enabled but no phone number found');
+      }
+      
+      // Wait for all notifications to complete (or fail)
+      if (promises.length > 0) {
+        try {
+          console.log('Delivery notification - Waiting for notifications to complete...');
+          const results = await Promise.allSettled(promises);
+          console.log('Delivery notification - All notification results:', results);
+          
+          // Check if any notifications were successful
+          const successfulNotifications = results.filter(result => 
+            result.status === 'fulfilled' && result.value && result.value.success
+          );
+          
+          if (successfulNotifications.length > 0) {
+            console.log(`Delivery notification - ${successfulNotifications.length} notification(s) sent successfully`);
+            return true;
+          } else {
+            console.log('Delivery notification - No notifications were sent successfully');
+            results.forEach((result, index) => {
+              if (result.status === 'fulfilled') {
+                console.log(`Delivery notification ${index} error:`, result.value.error);
+              } else {
+                console.log(`Delivery notification ${index} rejected:`, result.reason);
+              }
+            });
+            return false;
+          }
+        } catch (error) {
+          console.error('Delivery notification - Error sending notifications:', error);
+          return false;
+        }
+      } else {
+        console.log('Delivery notification - No notifications to send (no enabled methods with valid contact info)');
+        return false;
+      }
+    } else {
+      console.log('Delivery notification - No notification preferences enabled by user');
+      return false;
+    }
+  };
 
   // Comprehensive validation function for individual form fields
   // Validation functions - checks field-specific rules and returns error messages
@@ -128,7 +317,6 @@ const Delivery = () => {
     return error; // Return the error message (empty string if validation passes)
   };
 
-
   // Generic input change handler with real-time error clearing
   // Handle input changes with validation - updates form data and clears errors as user types
   const handleInputChange = (e) => {
@@ -140,7 +328,6 @@ const Delivery = () => {
       [name]: value // Update the specific field that changed
     }));
 
-
     // Clear error when user starts typing in a field that previously had an error
     if (errors[name]) {
       const error = validateField(name, value); // Re-validate the field
@@ -151,13 +338,11 @@ const Delivery = () => {
     }
   };
 
-
   // Focus event handler for visual feedback
   // Handle field focus - updates state to track which field has focus for styling
   const handleFocus = (fieldName) => {
     setFieldFocus(fieldName); // Set the currently focused field name
   };
-
 
   // Blur event handler with validation triggering
   // Handle field blur with validation - validates field when user leaves it
@@ -173,7 +358,6 @@ const Delivery = () => {
 
     setFieldFocus(''); // Clear focus state since field is no longer focused
   };
-
 
   // Specialized phone number formatter for Omani number patterns
   // Format phone number as user types - applies Omani phone number formatting
@@ -197,7 +381,6 @@ const Delivery = () => {
     }));
   };
 
-
   // Zip code formatter - only allows numbers and limits to 3 digits
   const handleZipCodeChange = (e) => {
     let value = e.target.value.replace(/[^0-9]/g, ''); // Remove any non-numeric characters
@@ -209,7 +392,6 @@ const Delivery = () => {
       zipCode: value
     }));
   };
-
 
   // Comprehensive form validation before submission
   // Validate entire form before submission - checks all required fields
@@ -228,7 +410,6 @@ const Delivery = () => {
     setErrors(newErrors); // Update errors state with all validation results
     return Object.keys(newErrors).length === 0; // Return true if no errors (form is valid)
   };
-
 
   // Main form submission handler with validation and success flow
   const handleConfirm = async (e) => {
@@ -289,7 +470,7 @@ const Delivery = () => {
 
       const orderToSave = {
         user: username,
-        email: userEmail || '',
+        email: userInfo.email || '',
         appliance: applianceName,
         applianceId: orderData.appliance?._id || null,
         startDate: startDate,
@@ -310,6 +491,14 @@ const Delivery = () => {
       const response = await axios.post('http://localhost:5000/addOrder', orderToSave);
       console.log('Order saved successfully:', response.data);
 
+      // Send delivery confirmation notifications
+      try {
+        await sendDeliveryNotification(orderToSave);
+      } catch (notificationError) {
+        console.error('Delivery notification error:', notificationError);
+        // Don't block the user if notification fails
+      }
+
       // Notify other components that appliances have been updated
       localStorage.setItem('applianceUpdated', Date.now().toString());
       window.dispatchEvent(new Event('storage'));
@@ -320,7 +509,7 @@ const Delivery = () => {
       // Show confirmation alert after success animation appears
       // Show alert after animation
       setTimeout(() => {
-        //  alert("Your order's on its way! 📦✨ We'll have it at your door soon."); // Success confirmation
+        // alert("Your order's on its way! 📦✨ We'll have it at your door soon."); // Success confirmation
       }, 1000); // 1 second delay after success state to allow animation to show
     } catch (error) {
       console.error('Error saving order:', error);
@@ -328,7 +517,6 @@ const Delivery = () => {
       alert('Failed to save order. Please try again.');
     }
   };
-
 
   // Timeline steps configuration for delivery progress visualization
   const timelineSteps = [
@@ -374,7 +562,6 @@ const Delivery = () => {
     }
   ];
 
-
   // Component render method - returns JSX for delivery interface
   return (
     <div className="main-contact">
@@ -404,7 +591,6 @@ const Delivery = () => {
               <div className="road"></div> {/* Road element for truck to drive along */}
             </div>
 
-
             {/* Floating Packages Animation - decorative floating package emojis */}
             <div className="floating-packages">
               <div className="floating-package p1">📦</div> {/* Floating package with emoji - position 1 */}
@@ -413,7 +599,6 @@ const Delivery = () => {
               <div className="floating-package p4">📦</div> {/* Floating package with emoji - position 4 */}
             </div>
           </div>
-
 
           {/* Main delivery form section */}
           <div className="contact-form">
@@ -426,7 +611,6 @@ const Delivery = () => {
                 <p className="success-text">{t('delivery.deliveryScheduled')}</p> {/* Success message with celebration emoji */}
               </div>
             )}
-
 
             {/* Delivery information form with enhanced validation and UX */}
             <form onSubmit={handleConfirm} noValidate> {/* noValidate prevents browser default validation */}
@@ -539,7 +723,6 @@ const Delivery = () => {
                 </div>
               </div>
 
-
               {/* Phone Number with Omani formatting */}
               {/* Phone Number */}
               <div className="form-group">
@@ -566,7 +749,6 @@ const Delivery = () => {
                 </small>
               </div>
 
-
               {/* Preferred Delivery Time selection with emoji-enhanced options */}
               {/* Preferred Delivery Time */}
               <div className="form-group">
@@ -589,7 +771,6 @@ const Delivery = () => {
                 </small>
               </div>
 
-
               {/* Optional delivery notes for special instructions */}
               {/* Delivery Notes */}
               <div className="form-group">
@@ -610,7 +791,6 @@ const Delivery = () => {
                 </small>
               </div>
 
-
               {/* Conditional loading animation during form processing */}
               {/* Loading Animation */}
               {isSubmitting && (
@@ -619,7 +799,6 @@ const Delivery = () => {
                   <p>{t('delivery.processingRequest')}</p> {/* Loading state message */}
                 </div>
               )}
-
 
               {/* Form submission button with dynamic states */}
               {/* Submit Button */}
@@ -644,7 +823,6 @@ const Delivery = () => {
               </div>
             </form>
 
-
             {/* Advanced delivery timeline section - shows after successful submission */}
             {/* Advanced Delivery Timeline */}
             <div className="advanced-timeline-section">
@@ -661,7 +839,6 @@ const Delivery = () => {
                   </div>
                 </div>
               </div>
-
 
               {/* Timeline steps container with staggered animations */}
               <div className="advanced-timeline">
@@ -682,7 +859,6 @@ const Delivery = () => {
                       </div>
                     </div>
 
-
                     {/* Timeline step content area */}
                     <div className="timeline-content">
                       <div className="timeline-header-content">
@@ -702,7 +878,6 @@ const Delivery = () => {
                         </div>
                       )}
 
-
                       {/* Conditional rendering - shows progress animation for current active step */}
                       {/* Progress animation for current step */}
                       {currentStep === step.step && (
@@ -716,7 +891,6 @@ const Delivery = () => {
                   </div>
                 ))}
               </div>
-
 
               {/* Timeline controls and delivery estimate information */}
               {/* Timeline Controls */}
@@ -740,7 +914,6 @@ const Delivery = () => {
     </div>
   );
 };
-
 
 // Export the component for use in other parts of the application
 export default Delivery;

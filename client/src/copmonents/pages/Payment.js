@@ -8,7 +8,7 @@ import Header from '../sections/Header';
 // Import React Router hooks for navigation and accessing route state
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-
+import axios from 'axios'; // Add axios for API calls
 
 // Main Payment component for handling payment information and processing
 const Payment = () => {
@@ -18,17 +18,14 @@ const Payment = () => {
   // Location hook to access state passed from previous route (RentalBooking page)
   const location = useLocation();
 
-
   // Refs for animation triggers - used to track DOM elements for scroll animations
   const orderSummaryRef = useRef(null); // Reference for order summary section
   const paymentSectionRef = useRef(null); // Reference for payment details section
   const buttonRef = useRef(null); // Reference for submit button
 
-
   // Destructure and retrieve state passed from RentalBooking component
   // Get the passed state from RentalBooking with fallback empty object
   const { totalAmount, finalAmount, appliance, days, rentalPeriod, startDate, endDate } = location.state || {};
-
 
   // State management for form data and user inputs
   // State for form data - tracks all form field values
@@ -47,12 +44,10 @@ const Payment = () => {
     expiryDate: ''
   });
 
-
   // State for animations and UI feedback
   // State for animations - manages loading states and visual feedback
   const [isLoading, setIsLoading] = useState(false); // Tracks if payment is being processed
   const [fieldFocus, setFieldFocus] = useState(''); // Tracks which form field has focus for styling
-
 
   // State to track if elements should be animated - controls scroll-triggered animations
   const [shouldAnimate, setShouldAnimate] = useState({
@@ -61,6 +56,38 @@ const Payment = () => {
     button: false // Controls submit button animation
   });
 
+  // State for user info and notifications
+  const [userInfo, setUserInfo] = useState({ email: '', user: '' });
+
+  // Fetch user info on component mount
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      const username = localStorage.getItem('username');
+      if (username) {
+        try {
+          const response = await axios.get(`http://localhost:5000/getUserProfile/${username}`);
+          if (response.data) {
+            setUserInfo({
+              email: response.data.email,
+              user: response.data.user
+            });
+            
+            // Set email in form data if available
+            if (response.data.email && !formData.email) {
+              setFormData(prev => ({
+                ...prev,
+                email: response.data.email
+              }));
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching user info:', error);
+        }
+      }
+    };
+    
+    fetchUserInfo();
+  }, []);
 
   // Intersection Observer for scroll animations - triggers animations when elements enter viewport
   useEffect(() => {
@@ -81,7 +108,6 @@ const Payment = () => {
       { threshold: 0.1 } // Trigger when 10% of element is visible
     );
 
-
     // Observe order summary section if ref exists
     if (orderSummaryRef.current) {
       orderSummaryRef.current.id = 'orderSummary'; // Set ID for tracking
@@ -93,11 +119,9 @@ const Payment = () => {
       observer.observe(buttonRef.current); // Start observing element
     }
 
-
     // Cleanup function - disconnect observer when component unmounts
     return () => observer.disconnect();
   }, []); // Empty dependency array - effect runs only once on mount
-
 
   // Generic input change handler for form fields
   // Handle input changes
@@ -118,7 +142,6 @@ const Payment = () => {
     }
   };
 
-
   // Focus event handler for form fields with visual feedback
   // Handle focus with animation
   const handleFocus = (fieldName) => {
@@ -135,13 +158,11 @@ const Payment = () => {
     }
   };
 
-
   // Blur event handler to clear focus state
   // Handle blur
   const handleBlur = () => {
     setFieldFocus(''); // Clear focused field state
   };
-
 
   // Specialized handler for card number input with strict 16-digit validation
   // Handle card number formatting with strict 16-digit requirement
@@ -176,7 +197,6 @@ const Payment = () => {
     }
   };
 
-
   // Specialized handler for CVV input with strict 3-digit validation
   // Handle CVV input with 3-digit requirement
   const handleCvvChange = (e) => {
@@ -204,7 +224,6 @@ const Payment = () => {
     }
   };
 
-
   // Specialized handler for expiry date input with auto-formatting and validation
   // Handle expiry date formatting with validation
   const handleExpiryDateChange = (e) => {
@@ -224,7 +243,6 @@ const Payment = () => {
     // Validate expiry date
     validateExpiryDate(value);
   };
-
 
   // Validate expiry date to ensure it's not in the past
   const validateExpiryDate = (value) => {
@@ -248,7 +266,6 @@ const Payment = () => {
     }
   };
 
-
   // Utility function to format date string for user-friendly display
   // Format date for display
   const formatDisplayDate = (dateString) => {
@@ -263,6 +280,197 @@ const Payment = () => {
     });
   };
 
+  // Function to send Email using backend API
+  const sendEmail = async (toEmail, subject, message) => {
+    try {
+      console.log('Sending email to:', toEmail);
+      console.log('Email subject:', subject);
+      
+      // Use your backend API endpoint
+      const response = await fetch('http://localhost:5000/sendNotification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: userInfo.user || 'Customer',
+          notificationType: 'email',
+          message: message,
+          email: toEmail
+        })
+      });
+
+      console.log('Backend response status:', response.status);
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Email sent successfully via backend:', result);
+        return { success: true };
+      } else {
+        const errorText = await response.text();
+        console.error('Failed to send email via backend. Status:', response.status);
+        console.error('Error details:', errorText);
+        
+        return { success: false, error: `Status ${response.status}: ${errorText}` };
+      }
+    } catch (error) {
+      console.error('Error sending email via backend:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Function to send SMS using backend API
+  const sendSMS = async (toPhoneNumber, message) => {
+    try {
+      // Use your backend API endpoint
+      const response = await fetch('http://localhost:5000/sendNotification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: userInfo.user || 'Customer',
+          notificationType: 'sms',
+          message: message,
+          phoneNumber: toPhoneNumber
+        })
+      });
+
+      console.log('Backend response status:', response.status);
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('SMS sent successfully via backend:', result);
+        return { success: true };
+      } else {
+        const errorText = await response.text();
+        console.error('Failed to send SMS via backend. Status:', response.status);
+        console.error('Error details:', errorText);
+        
+        return { success: false, error: `Status ${response.status}: ${errorText}` };
+      }
+    } catch (error) {
+      console.error('Error sending SMS via backend:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Function to send payment confirmation notifications based on user preferences
+  const sendPaymentNotification = async () => {
+    // Get notification preferences from localStorage
+    const savedPreferences = localStorage.getItem('notificationPreferences');
+    let notificationPreferences = {
+      email: false,
+      sms: false,
+      phoneNumber: ''
+    };
+    
+    console.log('Payment notification - Raw saved preferences from localStorage:', savedPreferences);
+    
+    if (savedPreferences) {
+      try {
+        notificationPreferences = JSON.parse(savedPreferences);
+        console.log('Payment notification - Parsed notification preferences:', notificationPreferences);
+      } catch (error) {
+        console.error('Error parsing notification preferences:', error);
+        return; // Don't send notifications if preferences can't be parsed
+      }
+    }
+    
+    // Check if user wants notifications
+    if (notificationPreferences.email || notificationPreferences.sms) {
+      // Prepare payment confirmation message
+      const paymentMessage = `Payment Confirmed!\n\nPayment Details:\n- Appliance: ${appliance.name}\n- Rental Period: ${days} ${rentalPeriod === 'weeks' ? 'weeks' : 'days'}\n- Payment Method: ${formData.paymentMethod === 'credit' ? 'Credit Card' : formData.paymentMethod === 'debit' ? 'Debit Card' : 'Bank Transfer'}\n- Payment Amount: ${finalAmount || (totalAmount + 20)} OMR\n- Payment Date: ${new Date().toLocaleDateString()}\n- Transaction Status: Completed\n\nYour payment has been successfully processed. Thank you for your business!`;
+      
+      console.log('Payment notification - User preferences:', {
+        email: notificationPreferences.email,
+        sms: notificationPreferences.sms,
+        hasEmail: !!userInfo.email,
+        hasPhone: !!notificationPreferences.phoneNumber,
+        userEmail: userInfo.email,
+        userPhone: notificationPreferences.phoneNumber
+      });
+      
+      const promises = [];
+      
+      // Send email notification
+      if (notificationPreferences.email && userInfo.email) {
+        console.log('Payment notification - Attempting to send email to:', userInfo.email);
+        promises.push(
+          sendEmail(
+            userInfo.email,
+            'Payment Confirmation - AppliRent',
+            paymentMessage
+          ).then(result => {
+            console.log('Payment notification - Email send result:', result);
+            return result;
+          }).catch(error => {
+            console.error('Failed to send payment email notification:', error);
+            return { success: false, error: error.message };
+          })
+        );
+      } else if (notificationPreferences.email && !userInfo.email) {
+        console.log('Payment notification - Email notifications enabled but no user email found');
+      }
+      
+      // Send SMS notification
+      if (notificationPreferences.sms && notificationPreferences.phoneNumber) {
+        console.log('Payment notification - Attempting to send SMS to:', notificationPreferences.phoneNumber);
+        promises.push(
+          sendSMS(
+            notificationPreferences.phoneNumber,
+            paymentMessage
+          ).then(result => {
+            console.log('Payment notification - SMS send result:', result);
+            return result;
+          }).catch(error => {
+            console.error('Failed to send payment SMS notification:', error);
+            return { success: false, error: error.message };
+          })
+        );
+      } else if (notificationPreferences.sms && !notificationPreferences.phoneNumber) {
+        console.log('Payment notification - SMS notifications enabled but no phone number found');
+      }
+      
+      // Wait for all notifications to complete (or fail)
+      if (promises.length > 0) {
+        try {
+          console.log('Payment notification - Waiting for notifications to complete...');
+          const results = await Promise.allSettled(promises);
+          console.log('Payment notification - All notification results:', results);
+          
+          // Check if any notifications were successful
+          const successfulNotifications = results.filter(result => 
+            result.status === 'fulfilled' && result.value && result.value.success
+          );
+          
+          if (successfulNotifications.length > 0) {
+            console.log(`Payment notification - ${successfulNotifications.length} notification(s) sent successfully`);
+            return true;
+          } else {
+            console.log('Payment notification - No notifications were sent successfully');
+            results.forEach((result, index) => {
+              if (result.status === 'fulfilled') {
+                console.log(`Payment notification ${index} error:`, result.value.error);
+              } else {
+                console.log(`Payment notification ${index} rejected:`, result.reason);
+              }
+            });
+            return false;
+          }
+        } catch (error) {
+          console.error('Payment notification - Error sending notifications:', error);
+          return false;
+        }
+      } else {
+        console.log('Payment notification - No notifications to send (no enabled methods with valid contact info)');
+        return false;
+      }
+    } else {
+      console.log('Payment notification - No notification preferences enabled by user');
+      return false;
+    }
+  };
 
   // Form validation function
   const validateForm = () => {
@@ -296,7 +504,6 @@ const Payment = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-
   // Form submission handler with loading state and navigation
   // Handle form submission with loading animation
   const handleDelivery = async (e) => {
@@ -304,16 +511,23 @@ const Payment = () => {
 
     // Validate form before submission
     if (!validateForm()) {
+      alert('Please fix the form errors before submitting.');
       return;
     }
 
     setIsLoading(true); // Set loading state to show processing indicator
 
+    try {
+      // Send payment confirmation notifications
+      await sendPaymentNotification();
+    } catch (notificationError) {
+      console.error('Payment notification error:', notificationError);
+      // Don't block the user if notification fails
+    }
 
     // Simulate payment processing with 2-second delay
     // Simulate payment processing
     await new Promise(resolve => setTimeout(resolve, 2000));
-
 
     // Prepare complete order data for next page
     // Prepare order data
@@ -330,11 +544,9 @@ const Payment = () => {
       }
     };
 
-
     setIsLoading(false); // Clear loading state
     navigate('/delivery', { state: orderData }); // Navigate to delivery page with order data
   };
-
 
   // Helper function to generate animation styles based on element state
   // Get animation styles
@@ -354,7 +566,6 @@ const Payment = () => {
       transition: 'all 0.6s ease-out' // Smooth transition effect
     };
   };
-
 
   // Component render method - returns JSX for payment interface
   return (
@@ -429,7 +640,6 @@ const Payment = () => {
               </div>
             )}
 
-
             {/* Main payment form */}
             <form onSubmit={handleDelivery}>
               {/* Email input field */}
@@ -492,7 +702,6 @@ const Payment = () => {
                 </select>
               </div>
 
-
               {/* Conditional rendering - show card details when credit/debit card is selected */}
               {/* Card details - SHOW IMMEDIATELY when selected */}
               {(formData.paymentMethod === 'credit' || formData.paymentMethod === 'debit') && (
@@ -536,7 +745,6 @@ const Payment = () => {
                       {t('payment.cardNumberHint')}
                     </small>
                   </div>
-
 
                   <div className="row">
                     {/* Expiry date input with auto-formatting and validation */}
@@ -613,7 +821,6 @@ const Payment = () => {
                 </div>
               )}
 
-
               {/* Conditional rendering - show bank transfer instructions when bank transfer is selected */}
               {/* Bank transfer details - SHOW IMMEDIATELY when selected */}
               {formData.paymentMethod === 'bank' && (
@@ -644,7 +851,6 @@ const Payment = () => {
                   </p>
                 </div>
               )}
-
 
               {/* Submit Button with loading state and hover effects */}
               {/* Submit Button */}
@@ -706,7 +912,6 @@ const Payment = () => {
       </div>
       <Footer /> {/* Render footer component */}
 
-
       {/* Embedded CSS animations for the component */}
       {/* Add CSS styles for animations */}
       <style jsx>{`
@@ -715,7 +920,6 @@ const Payment = () => {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
         }
-
 
         /* Scale-in animation for calculated end date */
         @keyframes scaleIn {
@@ -729,7 +933,6 @@ const Payment = () => {
           }
         }
 
-
         /* Slide-down animation for page title */
         @keyframes slideInDown {
           from {
@@ -741,7 +944,6 @@ const Payment = () => {
             opacity: 1;
           }
         }
-
 
         /* Slide-in from left animation for payment sections */
         @keyframes slideInLeft {
@@ -755,7 +957,6 @@ const Payment = () => {
           }
         }
 
-
         /* Page container styling */
         .payment-page {
           position: relative;
@@ -765,7 +966,6 @@ const Payment = () => {
     </div>
   );
 };
-
 
 // Export the component for use in other parts of the application
 export default Payment;
