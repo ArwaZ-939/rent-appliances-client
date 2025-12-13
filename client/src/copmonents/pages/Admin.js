@@ -196,23 +196,6 @@ const Admin = () => {
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
-
-            <label className="label">Name (Arabic):</label>
-            <div className="input-group">
-              <div className="input-group-prepend">
-                <span className="input-group-text">
-                  <i className="bi bi-sticky-fill"></i>
-                </span>
-              </div>
-              <input
-                type="text"
-                id="nameAr"
-                className="form-control"
-                placeholder="Enter Name in Arabic (Optional)"
-                value={nameAr}
-                onChange={(e) => setNameAr(e.target.value)}
-              />
-            </div>
             
 
             <label className="label">{t('admin.price')}</label>
@@ -250,22 +233,6 @@ const Admin = () => {
               ></textarea>
             </div>
 
-            <label className="label">Details (Arabic):</label>
-            <div className="input-group">
-              <div className="input-group-prepend">
-                <span className="input-group-text">
-                  <i className="bi bi-pencil-fill"></i>
-                </span>
-              </div>
-              <textarea
-                id="detailsAr"
-                className="form-control"
-                placeholder="Enter Details in Arabic (Optional)"
-                rows="4"
-                value={detailsAr}
-                onChange={(e) => setDetailsAr(e.target.value)}
-              ></textarea>
-            </div>
 
             <label className="label">{t('admin.quantity')}</label>
             <div className="input-group">
