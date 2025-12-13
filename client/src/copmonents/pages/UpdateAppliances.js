@@ -268,21 +268,6 @@ const UpdateAppliances = () => {
               />
             </div>
 
-            <label className="label">Name (Arabic):</label>
-            <div className="input-group">
-              <div className="input-group-prepend">
-                <span className="input-group-text">
-                  <i className="bi bi-sticky-fill"></i>
-                </span>
-              </div>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Enter Name in Arabic (Optional)"
-                value={nameAr}
-                onChange={(e) => setNameAr(e.target.value)}
-              />
-            </div>
 
             <label className="label">{t('updateAppliances.imageUrl')}</label>
             <div className="input-group">
@@ -333,21 +318,6 @@ const UpdateAppliances = () => {
               ></textarea>
             </div>
 
-            <label className="label">Details (Arabic):</label>
-            <div className="input-group">
-              <div className="input-group-prepend">
-                <span className="input-group-text">
-                  <i className="bi bi-pencil-fill"></i>
-                </span>
-              </div>
-              <textarea
-                className="form-control"
-                placeholder="Enter Details in Arabic (Optional)"
-                rows="4"
-                value={detailsAr}
-                onChange={(e) => setDetailsAr(e.target.value)}
-              ></textarea>
-            </div>
 
             <label className="label">{t('updateAppliances.quantity')}</label>
             <div className="input-group">

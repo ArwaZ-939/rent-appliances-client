@@ -1,17 +1,14 @@
-// src/copmonents/__test__/RentalBooking.test.js
 import { describe, test, expect } from '@jest/globals';
 
-// Define the utility functions based on the RentalBooking component logic
 const sanitizeOmanPhoneNumber = (value) => {
-  let sanitized = value.replace(/\D/g, ''); // Remove non-digit characters
+  let sanitized = value.replace(/\D/g, ''); 
 
-  // Ensure number starts with 7 or 9 and has max 8 digits
   if (sanitized.length > 0) {
     const firstDigit = sanitized[0];
     if (firstDigit !== '7' && firstDigit !== '9') {
-      sanitized = ''; // Clear if doesn't start with 7 or 9
+      sanitized = ''; 
     } else if (sanitized.length > 8) {
-      sanitized = sanitized.substring(0, 8); // Limit to 8 digits
+      sanitized = sanitized.substring(0, 8); 
     }
   }
 
@@ -20,9 +17,9 @@ const sanitizeOmanPhoneNumber = (value) => {
 
 const calculateTotalAmount = (days, pricePerDay, rentalPeriod) => {
   if (rentalPeriod === 'weeks') {
-    return days * pricePerDay * 7; // Calculate total: weeks × 7 days × price per day
+    return days * pricePerDay * 7;
   } else {
-    return days * pricePerDay; // Calculate total: days × price per day
+    return days * pricePerDay;
   }
 };
 
