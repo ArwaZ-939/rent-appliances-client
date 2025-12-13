@@ -17,7 +17,7 @@ const Header = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [phoneError, setPhoneError] = useState('');
   const [notificationPreferences, setNotificationPreferences] = useState({
-    email: false,
+    email: true, // Default to true
     sms: false
   });
   const navigate = useNavigate();
@@ -29,13 +29,24 @@ const Header = () => {
       try {
         const preferences = JSON.parse(savedPreferences);
         setNotificationPreferences({
-          email: preferences.email || false,
+          email: preferences.email !== undefined ? preferences.email : true, // Default to true if not saved
           sms: preferences.sms || false
         });
         setPhoneNumber(preferences.phoneNumber || '');
       } catch (error) {
         console.error('Error parsing saved preferences:', error);
+        // Set default preferences if parsing fails
+        setNotificationPreferences({
+          email: true,
+          sms: false
+        });
       }
+    } else {
+      // No saved preferences, set default with email selected
+      setNotificationPreferences({
+        email: true,
+        sms: false
+      });
     }
   }, []);
 
@@ -143,36 +154,55 @@ const Header = () => {
   };
 
   const handlePreferenceChange = (type) => {
-  let newPreferences = { ...notificationPreferences };
-
-  if (type === "email") {
-    newPreferences = {
-      email: !notificationPreferences.email,
-      sms: false,  // force SMS off
-    };
-  }
-
-  if (type === "sms") {
-    newPreferences = {
-      email: false, // force Email off
-      sms: !notificationPreferences.sms,
-    };
-  }
-
-  setNotificationPreferences(newPreferences);
-
-  // Clear phone error if SMS is turned off
-  if (!newPreferences.sms) {
-    setPhoneError('');
-  }
-
-  // Validate phone number if SMS is turned on and phone exists
-  if (newPreferences.sms && phoneNumber.trim()) {
-    const error = validateOmanPhoneNumber(phoneNumber);
-    setPhoneError(error);
-  }
-};
-
+    if (type === 'email') {
+      // If trying to uncheck email while SMS is already unchecked
+      if (!notificationPreferences.email && !notificationPreferences.sms) {
+        // Don't allow unchecking email if SMS is also unchecked
+        return;
+      }
+      
+      const newPreferences = {
+        email: !notificationPreferences.email,
+        sms: notificationPreferences.email && !notificationPreferences.sms ? false : notificationPreferences.sms
+      };
+      
+      // If email is being unchecked, ensure SMS is checked
+      if (notificationPreferences.email && !newPreferences.email && !newPreferences.sms) {
+        newPreferences.sms = true;
+      }
+      
+      setNotificationPreferences(newPreferences);
+    } else if (type === 'sms') {
+      // If trying to uncheck SMS while email is already unchecked
+      if (!notificationPreferences.sms && !notificationPreferences.email) {
+        // Don't allow unchecking SMS if email is also unchecked
+        return;
+      }
+      
+      const newPreferences = {
+        email: notificationPreferences.sms && !notificationPreferences.email ? false : notificationPreferences.email,
+        sms: !notificationPreferences.sms
+      };
+      
+      // If SMS is being unchecked, ensure email is checked
+      if (notificationPreferences.sms && !newPreferences.sms && !newPreferences.email) {
+        newPreferences.email = true;
+      }
+      
+      setNotificationPreferences(newPreferences);
+      
+      // Clear phone error if SMS is turned off
+      if (!newPreferences.sms) {
+        setPhoneError('');
+      }
+      
+      // Validate phone number if SMS is turned on and phone exists
+      if (newPreferences.sms && phoneNumber.trim()) {
+        const error = validateOmanPhoneNumber(phoneNumber);
+        setPhoneError(error);
+      }
+    }
+  };
 
   const handleNotificationSave = () => {
     // Validate if SMS is selected
@@ -187,6 +217,12 @@ const Header = () => {
         setPhoneError(error);
         return;
       }
+    }
+    
+    // Ensure at least one option is selected (should always be true with our logic)
+    if (!notificationPreferences.email && !notificationPreferences.sms) {
+      alert(t('notifications.atLeastOneRequired'));
+      return;
     }
     
     // Save to localStorage
@@ -318,12 +354,14 @@ const Header = () => {
                   type="checkbox"
                   checked={notificationPreferences.email}
                   onChange={() => handlePreferenceChange('email')}
+                  disabled={!notificationPreferences.email && !notificationPreferences.sms}
                 />{' '}
                 {t('notifications.emailNotifications')}
               </Label>
               <small className="form-text text-muted d-block">
                 {t('notifications.notificationsTo')}: {userInfo.email || t('notifications.yourRegisteredEmail')}
               </small>
+             
             </FormGroup>
 
             <FormGroup check className="mb-3">
@@ -332,6 +370,7 @@ const Header = () => {
                   type="checkbox"
                   checked={notificationPreferences.sms}
                   onChange={() => handlePreferenceChange('sms')}
+                  disabled={!notificationPreferences.sms && !notificationPreferences.email}
                 />{' '}
                 {t('notifications.smsNotifications')}
               </Label>

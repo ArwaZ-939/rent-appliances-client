@@ -9,8 +9,9 @@ import bcrypt from 'bcrypt';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 import Appliance from './Models/Appliance.js';
-
-
+import twilio from 'twilio';
+import dotenv from 'dotenv';
+import sgMail from '@sendgrid/mail';
 
 let app = express();
 app.use(cors());
@@ -787,7 +788,104 @@ app.post("/addOrder", async (req, res) => {
     }
 });
 
+// API endpoint to send notifications (Email or SMS)
+app.post('/sendNotification', async (req, res) => {
+  try {
+    const { username, notificationType, message, phoneNumber, email } = req.body;
+    
+    console.log('Received notification request:', { username, notificationType, email, phoneNumber });
+    
+    if (!notificationType || !message) {
+      return res.status(400).json({ message: 'Missing required fields.' });
+    }
+    
+    // Email Notification using nodemailer
+    if (notificationType === 'email' && email) {
+      try {
+        await transporter.sendMail({
+          from: 'arw93955@gmail.com',
+          to: email,
+          subject: 'AppliRent - Rental Booking Confirmation',
+          text: message,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #7B4F2C;">AppliRent Rental Confirmation</h2>
+              <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                ${message.replace(/\n/g, '<br>')}
+              </div>
+              <p>Thank you for choosing AppliRent!</p>
+              <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+              <p style="font-size: 12px; color: #666;">
+                This is an automated message. Please do not reply to this email.
+              </p>
+            </div>
+          `
+        });
+        
+        console.log(`Email sent to ${email} for user ${username}`);
+        return res.status(200).json({ 
+          message: 'Email notification sent successfully.',
+          type: 'email'
+        });
+      } catch (emailError) {
+        console.error('Error sending email:', emailError);
+        return res.status(500).json({ 
+          message: 'Failed to send email notification.', 
+          error: emailError.message 
+        });
+      }
+    }
+    
+    // SMS Notification using Twilio
+    if (notificationType === 'sms' && phoneNumber) {
+      try {
+        // Format Oman phone number
+        let formattedPhone = phoneNumber.replace(/\D/g, ''); // Remove non-digits
+        
+        // Add Oman country code if not present
+        if (!formattedPhone.startsWith('968') && formattedPhone.length === 8) {
+          formattedPhone = `+968${formattedPhone}`;
+        } else if (!formattedPhone.startsWith('+')) {
+          formattedPhone = `+${formattedPhone}`;
+        }
+        
+        // Initialize Twilio client directly with credentials
+        const twilioClient = twilio(
+          'ACbb3ade67e9ac05762b25d017481c3564',
+          '47941b7f1e48f477bbd379a4f19b7e93'
+        );
+        
+        await twilioClient.messages.create({
+          body: message,
+          from: '+16562339994',
+          to: formattedPhone
+        });
+        
+        console.log(`SMS sent to ${formattedPhone} for user ${username}`);
+        return res.status(200).json({ 
+          message: 'SMS notification sent successfully.', 
+          type: 'sms'
+        });
+      } catch (smsError) {
+        console.error('Error sending SMS:', smsError);
+        return res.status(500).json({ 
+          message: 'Failed to send SMS notification.', 
+          error: smsError.message 
+        });
+      }
+    }
+    
+    return res.status(400).json({ message: 'Invalid notification parameters.' });
+  } catch (error) {
+    console.error('Error in sendNotification endpoint:', error);
+    return res.status(500).json({ 
+      message: 'Internal server error.', 
+      error: error.message 
+    });
+  }
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT,()=>{
     console.log(`Server running on port ${PORT}`);
-})
+});

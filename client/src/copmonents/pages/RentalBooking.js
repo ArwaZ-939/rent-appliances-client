@@ -6,7 +6,7 @@ import Header from '../sections/Header'; // Header component
 import { useNavigate, useLocation } from 'react-router-dom'; // Hooks for navigation and accessing passed state
 import { useState, useEffect } from 'react'; // React hooks for managing state and side effects
 import { useTranslation } from 'react-i18next';
-
+import axios from 'axios'; // Add axios for API calls
 
 // Main RentalBooking component for handling appliance rental reservations
 const RentalBooking = () => {
@@ -16,7 +16,6 @@ const RentalBooking = () => {
 
   // Location hook to access state passed from previous route (ProductDetails page)
   const location = useLocation(); // Used to access the state passed from the previous route
-
 
   // State management for rental booking form
   // States to manage rental duration, pricing, and selected appliance
@@ -29,7 +28,8 @@ const RentalBooking = () => {
   const [phoneNumber, setPhoneNumber] = useState(''); // Oman phone number
   const [startDate, setStartDate] = useState(''); // Rental start date
   const [calculatedEndDate, setCalculatedEndDate] = useState(''); // Calculated rental end date
-
+  const [insuranceDeposit, setInsuranceDeposit] = useState(0); // Insurance deposit amount (50% of total)
+  const [userInfo, setUserInfo] = useState({ email: '', user: '' }); // User info for notifications
 
   // Effect hook to initialize component state when component mounts or location.state changes
   // Set initial state from the location (router state) when component loads
@@ -40,11 +40,30 @@ const RentalBooking = () => {
       setTotalAmount(location.state.price || 0); // Set initial total amount (1 day rental)
       setAppliance(location.state.appliance || null); // Store appliance object with name/details
     }
+    
+    // Fetch user info for notifications
+    const fetchUserInfo = async () => {
+      const username = localStorage.getItem('username');
+      if (username) {
+        try {
+          const response = await axios.get(`http://localhost:5000/getUserProfile/${username}`);
+          if (response.data) {
+            setUserInfo({
+              email: response.data.email,
+              user: response.data.user
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching user info:', error);
+        }
+      }
+    };
+    
+    fetchUserInfo();
   }, [location.state]); // Dependency array - effect runs when location.state changes
 
-
-  // Effect hook to recalculate total amount whenever rental duration, rental period, or price changes
-  // Update total amount whenever `days`, `rentalPeriod` or `pricePerDay` changes
+  // Effect hook to recalculate total amount and insurance deposit whenever rental duration, rental period, or price changes
+  // Update total amount and insurance deposit whenever `days`, `rentalPeriod` or `pricePerDay` changes
   useEffect(() => {
     let calculatedAmount;
     if (rentalPeriod === 'weeks') {
@@ -53,8 +72,11 @@ const RentalBooking = () => {
       calculatedAmount = days * pricePerDay; // Calculate total: days × price per day
     }
     setTotalAmount(calculatedAmount); // Update state with new calculated amount
+    
+    // Calculate insurance deposit as 50% of the total amount
+    const deposit = calculatedAmount * 0.5;
+    setInsuranceDeposit(deposit);
   }, [days, pricePerDay, rentalPeriod]); // Dependency array - effect runs when days, pricePerDay or rentalPeriod changes
-
 
   // Calculate end date when start date or rental duration changes
   useEffect(() => {
@@ -72,12 +94,10 @@ const RentalBooking = () => {
     }
   }, [startDate, days, rentalPeriod]);
 
-
   // Utility function to get today's date in YYYY-MM-DD format
   const getTodayDate = () => {
     return new Date().toISOString().split('T')[0];
   };
-
 
   // Utility function to get maximum date (1 year from now)
   const getMaxDate = () => {
@@ -85,7 +105,6 @@ const RentalBooking = () => {
     oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
     return oneYearFromNow.toISOString().split('T')[0];
   };
-
 
   // Format date for display
   const formatDisplayDate = (dateString) => {
@@ -99,6 +118,10 @@ const RentalBooking = () => {
     });
   };
 
+  // Format currency with 3 decimal places
+  const formatCurrency = (amount) => {
+    return amount.toFixed(3);
+  };
 
   // Event handler for rental duration input changes
   // Handle changes in the input field for number of days/weeks
@@ -107,13 +130,11 @@ const RentalBooking = () => {
     setDays(numberOfDays > 0 ? numberOfDays : 1); // Ensure minimum of 1 day/week, prevent negative values
   };
 
-
   // Event handler for rental period radio button changes
   // Handle rental period selection (days/weeks)
   const handleRentalPeriodChange = (e) => {
     setRentalPeriod(e.target.value);
   };
-
 
   // Event handler for Oman phone number formatting
   // Handle Oman phone number input with validation
@@ -133,12 +154,10 @@ const RentalBooking = () => {
     setPhoneNumber(value);
   };
 
-
   // Event handler for start date changes
   const handleStartDateChange = (e) => {
     setStartDate(e.target.value);
   };
-
 
   // Event handler for insurance terms agreement checkbox
   // Handle checkbox change for terms agreement
@@ -146,10 +165,216 @@ const RentalBooking = () => {
     setAgreedToTerms(e.target.checked); // Update state based on checkbox checked status
   };
 
+  // Function to send Email using SendGrid
+ const sendEmail = async (toEmail, subject, message) => {
+  try {
+    console.log('Sending email to:', toEmail);
+    console.log('Email subject:', subject);
+    
+    // Use your backend API endpoint
+    const response = await fetch('http://localhost:5000/sendNotification', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        username: userInfo.user || 'Customer',
+        notificationType: 'email',
+        message: message,
+        email: toEmail
+      })
+    });
+
+    console.log('Backend response status:', response.status);
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log('Email sent successfully via backend:', result);
+      return { success: true };
+    } else {
+      const errorText = await response.text();
+      console.error('Failed to send email via backend. Status:', response.status);
+      console.error('Error details:', errorText);
+      
+      return { success: false, error: `Status ${response.status}: ${errorText}` };
+    }
+  } catch (error) {
+    console.error('Error sending email via backend:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+  // Function to send SMS using Twilio
+  const sendSMS = async (toPhoneNumber, message) => {
+    try {
+      // Format Oman phone number
+      let formattedPhone = toPhoneNumber.replace(/\D/g, ''); // Remove non-digits
+    
+      // Add Oman country code if not present
+      if (!formattedPhone.startsWith('968') && formattedPhone.length === 8) {
+        formattedPhone = `+968${formattedPhone}`;
+      } else if (!formattedPhone.startsWith('+')) {
+        formattedPhone = `+${formattedPhone}`;
+      }
+
+      // Using the provided Twilio credentials
+      const accountSid = 'ACbb3ade67e9ac05762b25d017481c3564';
+      const authToken = '47941b7f1e48f477bbd379a4f19b7e93';
+      const fromNumber = '+16562339994';
+
+      // Create URL for Twilio API
+      const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
+
+      // Create form data
+      const formData = new URLSearchParams();
+      formData.append('To', formattedPhone);
+      formData.append('From', fromNumber);
+      formData.append('Body', message);
+
+      console.log('Sending SMS to:', formattedPhone);
+      console.log('SMS message:', message);
+
+      // Make the request using fetch
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Basic ' + btoa(`${accountSid}:${authToken}`),
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formData.toString()
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        console.log('SMS sent successfully:', data.sid);
+        return { success: true, sid: data.sid };
+      } else {
+        console.error('Failed to send SMS. Status:', response.status);
+        console.error('Error details:', data.message || data);
+        return { success: false, error: data.message || 'Unknown error' };
+      }
+    } catch (error) {
+      console.error('Error sending SMS:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Function to send notifications based on user preferences
+  const sendRentalNotification = async () => {
+    // Get notification preferences from localStorage
+    const savedPreferences = localStorage.getItem('notificationPreferences');
+    let notificationPreferences = {
+      email: false,
+      sms: false,
+      phoneNumber: ''
+    };
+    
+    console.log('Raw saved preferences from localStorage:', savedPreferences);
+    
+    if (savedPreferences) {
+      try {
+        notificationPreferences = JSON.parse(savedPreferences);
+        console.log('Parsed notification preferences:', notificationPreferences);
+      } catch (error) {
+        console.error('Error parsing notification preferences:', error);
+        return; // Don't send notifications if preferences can't be parsed
+      }
+    }
+    
+    // Check if user wants notifications
+    if (notificationPreferences.email || notificationPreferences.sms) {
+      // Prepare notification message
+      const notificationMessage = `Your rental booking for ${appliance.name} has been confirmed!\n\nOrder Details:\n- Rental Period: ${days} ${rentalPeriod === 'weeks' ? 'weeks' : 'days'}\n- Start Date: ${formatDisplayDate(startDate)}\n- End Date: ${formatDisplayDate(calculatedEndDate)}\n- Total Amount: ${totalAmount.toFixed(3)} OMR\n- Insurance Deposit: ${insuranceDeposit.toFixed(3)} OMR\n- Final Amount: ${(totalAmount + insuranceDeposit).toFixed(3)} OMR\n\nThank you for choosing AppliRent!`;
+      
+      console.log('User notification preferences:', {
+        email: notificationPreferences.email,
+        sms: notificationPreferences.sms,
+        hasEmail: !!userInfo.email,
+        hasPhone: !!notificationPreferences.phoneNumber,
+        userEmail: userInfo.email,
+        userPhone: notificationPreferences.phoneNumber
+      });
+      
+      const promises = [];
+      
+      // Send email notification
+      if (notificationPreferences.email && userInfo.email) {
+        console.log('Attempting to send email to:', userInfo.email);
+        promises.push(
+          sendEmail(
+            userInfo.email,
+            'Rental Booking Confirmation',
+            notificationMessage
+          ).then(result => {
+            console.log('Email send result:', result);
+            return result;
+          }).catch(error => {
+            console.error('Failed to send email notification:', error);
+            return { success: false, error: error.message };
+          })
+        );
+      } else if (notificationPreferences.email && !userInfo.email) {
+        console.log('Email notifications enabled but no user email found');
+      }
+      
+      // Send SMS notification
+      if (notificationPreferences.sms && notificationPreferences.phoneNumber) {
+        console.log('Attempting to send SMS to:', notificationPreferences.phoneNumber);
+        promises.push(
+          sendSMS(
+            notificationPreferences.phoneNumber,
+            notificationMessage
+          ).then(result => {
+            console.log('SMS send result:', result);
+            return result;
+          }).catch(error => {
+            console.error('Failed to send SMS notification:', error);
+            return { success: false, error: error.message };
+          })
+        );
+      } else if (notificationPreferences.sms && !notificationPreferences.phoneNumber) {
+        console.log('SMS notifications enabled but no phone number found');
+      }
+      
+      // Wait for all notifications to complete (or fail)
+      if (promises.length > 0) {
+        try {
+          console.log('Waiting for notifications to complete...');
+          const results = await Promise.allSettled(promises);
+          console.log('All notification results:', results);
+          
+          // Check if any notifications were successful
+          const successfulNotifications = results.filter(result => 
+            result.status === 'fulfilled' && result.value && result.value.success
+          );
+          
+          if (successfulNotifications.length > 0) {
+            console.log(`${successfulNotifications.length} notification(s) sent successfully`);
+          } else {
+            console.log('No notifications were sent successfully');
+            results.forEach((result, index) => {
+              if (result.status === 'fulfilled') {
+                console.log(`Notification ${index} error:`, result.value.error);
+              } else {
+                console.log(`Notification ${index} rejected:`, result.reason);
+              }
+            });
+          }
+        } catch (error) {
+          console.error('Error sending notifications:', error);
+        }
+      } else {
+        console.log('No notifications to send (no enabled methods with valid contact info)');
+      }
+    } else {
+      console.log('No notification preferences enabled by user');
+    }
+  };
 
   // Form submission handler - processes rental booking and navigates to payment page
   // Handle form submission: navigate to the payment page with necessary state
-  const handlePayment = (e) => {
+  const handlePayment = async (e) => {
     e.preventDefault(); // Prevent default form submission behavior (page reload)
 
     // Validate Oman phone number
@@ -164,12 +389,21 @@ const RentalBooking = () => {
       return;
     }
 
-    const finalAmount = totalAmount + 20; // Calculate final amount: rental total + 20 OMR insurance deposit
+    const finalAmount = totalAmount + insuranceDeposit;
+    
+    // Send notifications based on user preferences
+    try {
+      await sendRentalNotification();
+    } catch (notificationError) {
+      console.error('Notification error:', notificationError);
+      // Don't block the user if notification fails
+    }
 
     // Navigate to payment page with all necessary data as route state
     navigate('/payment', {
       state: {
         totalAmount, // Pass rental amount without insurance deposit
+        insuranceDeposit, // Pass insurance deposit amount
         finalAmount, // Include final amount with insurance deposit added
         appliance, // Pass appliance details for order summary
         days, // Pass rental duration for order processing
@@ -180,14 +414,12 @@ const RentalBooking = () => {
     });
   };
 
-
   // Component render method - returns JSX for rental booking interface
   return (
     <>
       {/* Main container for the rental booking page */}
       <div className="main-contact">
         <Header /> {/* Top navigation/header component */}
-
 
         {/* Main content container with responsive layout */}
         <div className="container contact-container">
@@ -204,7 +436,6 @@ const RentalBooking = () => {
                 width="600px" // Fixed width for consistent layout
               />
             </div>
-
 
             {/* Right side - rental booking form section */}
             {/* Right side form */}
@@ -236,7 +467,6 @@ const RentalBooking = () => {
                 </div>
               )}
 
-
               {/* Insurance deposit information section with warning styling */}
               {/* Insurance Deposit Notice */}
               <div
@@ -256,14 +486,13 @@ const RentalBooking = () => {
                 </h5>
                 {/* Deposit amount information */}
                 <p style={{ margin: '0 0 10px 0', fontSize: '14px' }}>
-                  {t('rentalBooking.depositNotice')}
+                  A 50% insurance deposit is required for all rentals.
                 </p>
                 {/* Deposit terms and conditions */}
                 <p style={{ margin: 0, fontSize: '14px' }}>
                   {t('rentalBooking.depositTerms')}
                 </p>
               </div>
-
 
               {/* Pricing breakdown section showing rental cost calculation */}
               {/* Total rental cost */}
@@ -305,18 +534,17 @@ const RentalBooking = () => {
                 
                 {/* Rental amount line */}
                 <h4 style={{ color: '#7B4F2C', margin: '0 0 5px 0' }}>
-                  {t('rentalBooking.rentalAmount')}: {totalAmount} OMR
+                  {t('rentalBooking.rentalAmount')}: {formatCurrency(totalAmount)} OMR
                 </h4>
                 {/* Insurance deposit line */}
                 <h4 style={{ color: '#7B4F2C', margin: '0 0 5px 0' }}>
-                  {t('rentalBooking.insuranceDepositAmount')}
+                  Insurance Deposit (50%): {formatCurrency(insuranceDeposit)} OMR
                 </h4>
                 {/* Final total amount with visual separator */}
                 <h4 style={{ color: '#7B4F2C', margin: 0, borderTop: '1px solid #dee2e6', paddingTop: '5px' }}>
-                  {t('rentalBooking.finalAmount')}: {totalAmount + 20} OMR
+                  {t('rentalBooking.finalAmount')}: {formatCurrency(totalAmount + insuranceDeposit)} OMR
                 </h4>
               </div>
-
 
               {/* Main rental booking form */}
               {/* Rental booking form */}
@@ -447,7 +675,6 @@ const RentalBooking = () => {
                   />
                 </div>
 
-
                 {/* Contact phone number input */}
                 {/* Phone number input */}
                 <div className="form-group">
@@ -469,7 +696,6 @@ const RentalBooking = () => {
                   </small>
                 </div>
 
-
                 {/* Optional additional comments/instructions */}
                 {/* Optional comments */}
                 <div className="form-group">
@@ -482,7 +708,6 @@ const RentalBooking = () => {
                     placeholder={t('rentalBooking.yourComments')} // Placeholder text
                   ></textarea>
                 </div>
-
 
                 {/* Terms and conditions agreement checkbox */}
                 {/* Agreement checkbox */}
@@ -501,7 +726,6 @@ const RentalBooking = () => {
                     </label>
                   </div>
                 </div>
-
 
                 <br />
                 {/* Form submission button with conditional enabling */}
@@ -522,7 +746,6 @@ const RentalBooking = () => {
           </div>
         </div>
 
-
         {/* Page footer component */}
         {/* Bottom of the page */}
         <Footer />
@@ -530,7 +753,6 @@ const RentalBooking = () => {
     </>
   );
 };
-
 
 // Export the component for use in other parts of the application
 export default RentalBooking;
