@@ -1,7 +1,7 @@
 import Footer from '../sections/Footer';
 import Header from '../sections/Header';
 import { useTranslation } from 'react-i18next';
-
+// TEST
 
 const Help = () => {
     const { t } = useTranslation();
