@@ -459,11 +459,11 @@ const Delivery = () => {
       }
 
       // Validate email before submitting
-      if (!userEmail || userEmail.trim() === '') {
-        alert('Email is required. Please ensure you are logged in with a valid email.');
-        setIsSubmitting(false);
-        return;
-      }
+if (!userInfo.email || userInfo.email.trim() === '') {
+  alert('Email is required. Please ensure you are logged in with a valid email.');
+  setIsSubmitting(false);
+  return;
+}
 
       // Extract appliance name - handle both object and string formats
       let applianceName = 'Unknown';
@@ -482,28 +482,24 @@ const Delivery = () => {
         return;
       }
 
-      const orderToSave = {
-        user: username,
-<<<<<<< HEAD
-        email: userEmail,
-=======
-        email: userInfo.email || '',
->>>>>>> ae24871f58d2ff829a02f9e095bf848144491ba7
-        appliance: applianceName,
-        applianceId: orderData.appliance?._id || null,
-        startDate: startDate,
-        endDate: endDate,
-        totalAmount: orderData.totalAmount || orderData.finalAmount || 0,
-        status: 'pending',
-        deliveryAddress: {
-          area: formData.area,
-          city: formData.city,
-          street: formData.street,
-          number: formData.number,
-          zipCode: formData.zipCode,
-          phone: formData.phone
-        }
-      };
+    const orderToSave = {
+  user: username,
+  email: userInfo.email || '',
+  appliance: applianceName,
+  applianceId: orderData.appliance?._id || null,
+  startDate: startDate,
+  endDate: endDate,
+  totalAmount: orderData.totalAmount || orderData.finalAmount || 0,
+  status: 'pending',
+  deliveryAddress: {
+    area: formData.area,
+    city: formData.city,
+    street: formData.street,
+    number: formData.number,
+    zipCode: formData.zipCode,
+    phone: formData.phone
+  }
+};
 
       // Log the order data being sent for debugging
       console.log('Submitting order with data:', {

@@ -30,6 +30,7 @@ const RentalBooking = () => {
   const [calculatedEndDate, setCalculatedEndDate] = useState(''); // Calculated rental end date
   const [insuranceDeposit, setInsuranceDeposit] = useState(0); // Insurance deposit amount (50% of total)
   const [userInfo, setUserInfo] = useState({ email: '', user: '' }); // User info for notifications
+  const [isSendingNotifications, setIsSendingNotifications] = useState(false); // Track notification sending state
 
   // Effect hook to initialize component state when component mounts or location.state changes
   // Set initial state from the location (router state) when component loads
@@ -165,103 +166,87 @@ const RentalBooking = () => {
     setAgreedToTerms(e.target.checked); // Update state based on checkbox checked status
   };
 
-  // Function to send Email using SendGrid
- const sendEmail = async (toEmail, subject, message) => {
-  try {
-    console.log('Sending email to:', toEmail);
-    console.log('Email subject:', subject);
-    
-    // Use your backend API endpoint
-    const response = await fetch('http://localhost:5000/sendNotification', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        username: userInfo.user || 'Customer',
-        notificationType: 'email',
-        message: message,
-        email: toEmail
-      })
-    });
-
-    console.log('Backend response status:', response.status);
-
-    if (response.ok) {
-      const result = await response.json();
-      console.log('Email sent successfully via backend:', result);
-      return { success: true };
-    } else {
-      const errorText = await response.text();
-      console.error('Failed to send email via backend. Status:', response.status);
-      console.error('Error details:', errorText);
-      
-      return { success: false, error: `Status ${response.status}: ${errorText}` };
-    }
-  } catch (error) {
-    console.error('Error sending email via backend:', error);
-    return { success: false, error: error.message };
-  }
-};
-
-  // Function to send SMS using Twilio
-  const sendSMS = async (toPhoneNumber, message) => {
+  // Function to send Email using your backend API
+  const sendEmail = async (toEmail, subject, message) => {
     try {
-      // Format Oman phone number
-      let formattedPhone = toPhoneNumber.replace(/\D/g, ''); // Remove non-digits
-    
-      // Add Oman country code if not present
-      if (!formattedPhone.startsWith('968') && formattedPhone.length === 8) {
-        formattedPhone = `+968${formattedPhone}`;
-      } else if (!formattedPhone.startsWith('+')) {
-        formattedPhone = `+${formattedPhone}`;
-      }
-
-      // Using the provided Twilio credentials
-      const accountSid = 'ACbb3ade67e9ac05762b25d017481c3564';
-      const authToken = '47941b7f1e48f477bbd379a4f19b7e93';
-      const fromNumber = '+16562339994';
-
-      // Create URL for Twilio API
-      const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
-
-      // Create form data
-      const formData = new URLSearchParams();
-      formData.append('To', formattedPhone);
-      formData.append('From', fromNumber);
-      formData.append('Body', message);
-
-      console.log('Sending SMS to:', formattedPhone);
-      console.log('SMS message:', message);
-
-      // Make the request using fetch
-      const response = await fetch(url, {
+      console.log('Sending email to:', toEmail);
+      console.log('Email subject:', subject);
+      
+      // Use your backend API endpoint
+      const response = await fetch('http://localhost:5000/sendNotification', {
         method: 'POST',
         headers: {
-          'Authorization': 'Basic ' + btoa(`${accountSid}:${authToken}`),
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json',
         },
-        body: formData.toString()
+        body: JSON.stringify({
+          username: userInfo.user || 'Customer',
+          notificationType: 'email',
+          message: message,
+          email: toEmail
+        })
       });
 
-      const data = await response.json();
-      
+      console.log('Backend response status:', response.status);
+
       if (response.ok) {
-        console.log('SMS sent successfully:', data.sid);
-        return { success: true, sid: data.sid };
+        const result = await response.json();
+        console.log('Email sent successfully via backend:', result);
+        return { success: true };
       } else {
-        console.error('Failed to send SMS. Status:', response.status);
-        console.error('Error details:', data.message || data);
-        return { success: false, error: data.message || 'Unknown error' };
+        const errorText = await response.text();
+        console.error('Failed to send email via backend. Status:', response.status);
+        console.error('Error details:', errorText);
+        
+        return { success: false, error: `Status ${response.status}: ${errorText}` };
       }
     } catch (error) {
-      console.error('Error sending SMS:', error);
+      console.error('Error sending email via backend:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Function to send SMS using your backend API (FIXED)
+  const sendSMS = async (toPhoneNumber, message) => {
+    try {
+      console.log('Sending SMS to:', toPhoneNumber);
+      
+      // Use your backend API endpoint instead of direct Twilio call
+      const response = await fetch('http://localhost:5000/sendNotification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: userInfo.user || 'Customer',
+          notificationType: 'sms',
+          message: message,
+          phoneNumber: toPhoneNumber
+        })
+      });
+
+      console.log('Backend SMS response status:', response.status);
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('SMS sent successfully via backend:', result);
+        return { success: true };
+      } else {
+        const errorText = await response.text();
+        console.error('Failed to send SMS via backend. Status:', response.status);
+        console.error('Error details:', errorText);
+        
+        return { success: false, error: `Status ${response.status}: ${errorText}` };
+      }
+    } catch (error) {
+      console.error('Error sending SMS via backend:', error);
       return { success: false, error: error.message };
     }
   };
 
   // Function to send notifications based on user preferences
   const sendRentalNotification = async () => {
+    setIsSendingNotifications(true);
+    
     // Get notification preferences from localStorage
     const savedPreferences = localStorage.getItem('notificationPreferences');
     let notificationPreferences = {
@@ -278,7 +263,8 @@ const RentalBooking = () => {
         console.log('Parsed notification preferences:', notificationPreferences);
       } catch (error) {
         console.error('Error parsing notification preferences:', error);
-        return; // Don't send notifications if preferences can't be parsed
+        setIsSendingNotifications(false);
+        return { success: false, error: 'Invalid notification preferences' };
       }
     }
     
@@ -297,78 +283,79 @@ const RentalBooking = () => {
       });
       
       const promises = [];
+      const results = [];
       
       // Send email notification
       if (notificationPreferences.email && userInfo.email) {
         console.log('Attempting to send email to:', userInfo.email);
-        promises.push(
-          sendEmail(
-            userInfo.email,
-            'Rental Booking Confirmation',
-            notificationMessage
-          ).then(result => {
-            console.log('Email send result:', result);
-            return result;
-          }).catch(error => {
-            console.error('Failed to send email notification:', error);
-            return { success: false, error: error.message };
-          })
-        );
+        const emailPromise = sendEmail(
+          userInfo.email,
+          'Rental Booking Confirmation',
+          notificationMessage
+        ).then(result => {
+          console.log('Email send result:', result);
+          results.push({ type: 'email', success: result.success, error: result.error });
+          return result;
+        }).catch(error => {
+          console.error('Failed to send email notification:', error);
+          results.push({ type: 'email', success: false, error: error.message });
+          return { success: false, error: error.message };
+        });
+        promises.push(emailPromise);
       } else if (notificationPreferences.email && !userInfo.email) {
         console.log('Email notifications enabled but no user email found');
+        results.push({ type: 'email', success: false, error: 'No email address found' });
       }
       
       // Send SMS notification
       if (notificationPreferences.sms && notificationPreferences.phoneNumber) {
         console.log('Attempting to send SMS to:', notificationPreferences.phoneNumber);
-        promises.push(
-          sendSMS(
-            notificationPreferences.phoneNumber,
-            notificationMessage
-          ).then(result => {
-            console.log('SMS send result:', result);
-            return result;
-          }).catch(error => {
-            console.error('Failed to send SMS notification:', error);
-            return { success: false, error: error.message };
-          })
-        );
+        const smsPromise = sendSMS(
+          notificationPreferences.phoneNumber,
+          notificationMessage
+        ).then(result => {
+          console.log('SMS send result:', result);
+          results.push({ type: 'sms', success: result.success, error: result.error });
+          return result;
+        }).catch(error => {
+          console.error('Failed to send SMS notification:', error);
+          results.push({ type: 'sms', success: false, error: error.message });
+          return { success: false, error: error.message };
+        });
+        promises.push(smsPromise);
       } else if (notificationPreferences.sms && !notificationPreferences.phoneNumber) {
         console.log('SMS notifications enabled but no phone number found');
+        results.push({ type: 'sms', success: false, error: 'No phone number found' });
       }
       
       // Wait for all notifications to complete (or fail)
       if (promises.length > 0) {
         try {
           console.log('Waiting for notifications to complete...');
-          const results = await Promise.allSettled(promises);
-          console.log('All notification results:', results);
+          await Promise.allSettled(promises);
+          console.log('All notification promises settled');
           
           // Check if any notifications were successful
-          const successfulNotifications = results.filter(result => 
-            result.status === 'fulfilled' && result.value && result.value.success
-          );
+          const successfulNotifications = results.filter(result => result.success);
           
           if (successfulNotifications.length > 0) {
             console.log(`${successfulNotifications.length} notification(s) sent successfully`);
+            return { success: true, results: results };
           } else {
             console.log('No notifications were sent successfully');
-            results.forEach((result, index) => {
-              if (result.status === 'fulfilled') {
-                console.log(`Notification ${index} error:`, result.value.error);
-              } else {
-                console.log(`Notification ${index} rejected:`, result.reason);
-              }
-            });
+            return { success: false, results: results, error: 'Failed to send notifications' };
           }
         } catch (error) {
           console.error('Error sending notifications:', error);
+          return { success: false, error: error.message, results: results };
         }
       } else {
         console.log('No notifications to send (no enabled methods with valid contact info)');
+        return { success: false, error: 'No valid contact information found for notifications', results: [] };
       }
     } else {
       console.log('No notification preferences enabled by user');
+      return { success: true, results: [], message: 'Notifications not enabled by user' };
     }
   };
 
@@ -393,10 +380,22 @@ const RentalBooking = () => {
     
     // Send notifications based on user preferences
     try {
-      await sendRentalNotification();
+      console.log('Starting to send notifications...');
+      const notificationResult = await sendRentalNotification();
+      
+      if (notificationResult.success) {
+        console.log('Notifications sent successfully:', notificationResult);
+      } else {
+        console.log('Notifications failed or partially failed:', notificationResult);
+        // Don't block the user if notification fails
+        // You could show a warning message here if you want
+        // alert('Notifications could not be sent, but your booking will proceed.');
+      }
     } catch (notificationError) {
       console.error('Notification error:', notificationError);
       // Don't block the user if notification fails
+    } finally {
+      setIsSendingNotifications(false);
     }
 
     // Navigate to payment page with all necessary data as route state
@@ -442,6 +441,13 @@ const RentalBooking = () => {
             <div className="contact-form">
               {/* Page heading */}
               <h2 style={{ color: '#7B4F2C' }}>Rental booking</h2>
+
+              {/* Show loading indicator when sending notifications */}
+              {isSendingNotifications && (
+                <div className="alert alert-info" role="alert">
+                  Sending notifications... Please wait.
+                </div>
+              )}
 
               {/* Conditional rendering - show appliance info if available */}
               {/* Show appliance info if available */}
@@ -733,13 +739,13 @@ const RentalBooking = () => {
                 <button
                   type="submit" // Button type for form submission
                   className="btn btn-submit" // CSS classes for styling
-                  disabled={!agreedToTerms || phoneNumber.length !== 8 || !startDate} // Disable button until terms are agreed, phone is valid, and start date is selected
+                  disabled={!agreedToTerms || phoneNumber.length !== 8 || !startDate || isSendingNotifications} // Disable button until terms are agreed, phone is valid, and start date is selected
                   style={{
-                    opacity: (agreedToTerms && phoneNumber.length === 8 && startDate) ? 1 : 0.6, // Visual feedback for disabled state
-                    cursor: (agreedToTerms && phoneNumber.length === 8 && startDate) ? 'pointer' : 'not-allowed' // Cursor feedback
+                    opacity: (agreedToTerms && phoneNumber.length === 8 && startDate && !isSendingNotifications) ? 1 : 0.6, // Visual feedback for disabled state
+                    cursor: (agreedToTerms && phoneNumber.length === 8 && startDate && !isSendingNotifications) ? 'pointer' : 'not-allowed' // Cursor feedback
                   }}
                 >
-                  {t('rentalBooking.proceedToPayment')} {/* Button text */}
+                  {isSendingNotifications ? 'Sending Notifications...' : t('rentalBooking.proceedToPayment')} {/* Button text */}
                 </button>
               </form>
             </div>

@@ -849,11 +849,8 @@ app.post('/sendNotification', async (req, res) => {
           formattedPhone = `+${formattedPhone}`;
         }
         
-        // Initialize Twilio client directly with credentials
-        const twilioClient = twilio(
-          'ACbb3ade67e9ac05762b25d017481c3564',
-          '47941b7f1e48f477bbd379a4f19b7e93'
-        );
+        // Initialize Twilio client directly with credentials --> Paste your actual credentials here
+       
         
         await twilioClient.messages.create({
           body: message,
