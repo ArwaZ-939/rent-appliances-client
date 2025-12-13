@@ -199,11 +199,12 @@ const ApplianceCards = ({ onRentClick }) => {
   };
 
   // Filter appliances based on search term (works with both English and Arabic)
+  // Search by first letter(s) - matches appliances that start with the search term
   const filteredAppliances = appliances.filter(appliance => {
     const translation = getApplianceTranslation(appliance);
     const searchLower = searchTerm.toLowerCase();
-    return appliance.name.toLowerCase().includes(searchLower) || 
-           translation.name.toLowerCase().includes(searchLower);
+    return appliance.name.toLowerCase().startsWith(searchLower) || 
+           translation.name.toLowerCase().startsWith(searchLower);
   });
 
   // Count only available appliances by name (for the badge)
@@ -310,8 +311,7 @@ const ApplianceCards = ({ onRentClick }) => {
         {uniqueAppliances.length > 0 ? (
           uniqueAppliances.map((appliance) => {
             const count = applianceCounts[appliance.name] || 0;
-            // Only show appliances that have at least one available
-            if (count === 0) return null;
+            // Show all appliances, even if count is 0 (out of stock)
             return (
             <Col key={appliance._id} className="d-flex">
               <Card
@@ -321,8 +321,13 @@ const ApplianceCards = ({ onRentClick }) => {
                   borderRadius: '12px',
                   display: 'flex',
                   flexDirection: 'column',
+                  opacity: count === 0 ? 0.7 : 1, // Slightly fade out-of-stock items
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.03)')}
+                onMouseEnter={(e) => {
+                  if (count > 0) {
+                    e.currentTarget.style.transform = 'scale(1.03)';
+                  }
+                }}
                 onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
               >
                 {appliance.imgUrl && (
@@ -336,6 +341,7 @@ const ApplianceCards = ({ onRentClick }) => {
                       borderTopLeftRadius: '12px',
                       borderTopRightRadius: '12px',
                       backgroundColor: '#f8f9fa',
+                      opacity: count === 0 ? 0.6 : 1, // Fade image for out-of-stock items
                     }}
                   />
                 )}
@@ -343,16 +349,18 @@ const ApplianceCards = ({ onRentClick }) => {
                   <div>
                     <CardTitle tag="h5" className={`mb-2 ${darkMode ? 'text-light' : 'text-primary'}`} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span>{getApplianceTranslation(appliance).name}</span>
-                      <span style={{
-                        backgroundColor: '#7B4F2C',
-                        color: 'white',
-                        borderRadius: '12px',
-                        padding: '2px 8px',
-                        fontSize: '12px',
-                        fontWeight: '600'
-                      }}>
-                        {count}
-                      </span>
+                      {count > 0 && (
+                        <span style={{
+                          backgroundColor: '#7B4F2C',
+                          color: 'white',
+                          borderRadius: '12px',
+                          padding: '2px 8px',
+                          fontSize: '12px',
+                          fontWeight: '600'
+                        }}>
+                          {count}
+                        </span>
+                      )}
                     </CardTitle>
                     <CardText className={`mb-2 ${darkMode ? 'text-light' : 'text-muted'}`}>
                       <strong>{t('catalog.pricePerDay')}</strong> {formatPrice(appliance.price)}
@@ -368,15 +376,18 @@ const ApplianceCards = ({ onRentClick }) => {
                       className="w-100 mt-2"
                       disabled={count === 0}
                       onClick={() => handleRentClickInternal(appliance)}
+                      style={{
+                        cursor: count === 0 ? 'not-allowed' : 'pointer',
+                      }}
                     >
-                      {t('catalog.rentNow')}
+                      {count === 0 ? t('catalog.outOfStock') : t('catalog.rentNow')}
                     </Button>
                   </div>
                 </CardBody>
               </Card>
             </Col>
             );
-          }).filter(item => item !== null)
+          })
         ) : (
           <Col>
             <p className={`text-center mt-4 ${darkMode ? 'text-light' : 'text-muted'}`}>{t('catalog.noAppliancesFound')}</p>

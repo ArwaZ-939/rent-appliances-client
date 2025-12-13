@@ -279,11 +279,22 @@ app.post("/inserAppliance", async (req, res) => {
     try {
         console.log("Received request body:", req.body);
         
+        // Normalize price if it's a string (e.g., "5 OR" -> 5)
+        let normalizedPrice = 0;
+        if (req.body.price) {
+            if (typeof req.body.price === 'string') {
+                const priceMatch = req.body.price.toString().match(/\d+(\.\d+)?/);
+                normalizedPrice = priceMatch ? parseFloat(priceMatch[0]) : parseFloat(req.body.price) || 0;
+            } else {
+                normalizedPrice = parseFloat(req.body.price) || 0;
+            }
+        }
+        
         const newAppliance = new ApplianceModel({
             name: req.body.name,
             name_ar: req.body.name_ar || "",
             imgUrl: req.body.imgUrl || "",
-            price: parseFloat(req.body.price) || 0,
+            price: normalizedPrice,
             details: req.body.details,
             details_ar: req.body.details_ar || "",
             available: req.body.available,
@@ -476,11 +487,27 @@ app.put('/updateAppliance/:id', async (req, res) => {
             return res.status(404).json({ message: 'Appliance not found.' });
         }
 
+        // Normalize existing price field if it's a string (e.g., "5 OR" -> 5)
+        if (typeof appliance.price === 'string') {
+            const priceMatch = appliance.price.toString().match(/\d+(\.\d+)?/);
+            if (priceMatch) {
+                appliance.price = parseFloat(priceMatch[0]);
+            }
+        }
+
         // Update appliance details
         if (name) appliance.name = name;
         if (name_ar !== undefined) appliance.name_ar = name_ar;
         if (imgUrl !== undefined) appliance.imgUrl = imgUrl;
-        if (price) appliance.price = parseFloat(price);
+        if (price) {
+            // Normalize new price if it's a string
+            if (typeof price === 'string') {
+                const priceMatch = price.toString().match(/\d+(\.\d+)?/);
+                appliance.price = priceMatch ? parseFloat(priceMatch[0]) : parseFloat(price);
+            } else {
+                appliance.price = parseFloat(price);
+            }
+        }
         if (details) appliance.details = details;
         if (details_ar !== undefined) appliance.details_ar = details_ar;
         if (available !== undefined) appliance.available = available;
@@ -717,9 +744,22 @@ app.post("/addOrder", async (req, res) => {
             return res.status(400).json({ message: "No available appliances of this type. Please try another appliance." });
         }
         
-        // Mark the appliance as unavailable
-        availableAppliance.available = false;
-        await availableAppliance.save();
+        // Normalize price field if it's a string (e.g., "5 OR" -> 5)
+        // Use updateOne to avoid validation issues with existing string prices
+        let updateData = { available: false };
+        
+        if (typeof availableAppliance.price === 'string') {
+            const priceMatch = availableAppliance.price.toString().match(/\d+(\.\d+)?/);
+            if (priceMatch) {
+                updateData.price = parseFloat(priceMatch[0]);
+            }
+        }
+        
+        // Update the appliance using updateOne to avoid full document validation
+        await ApplianceModel.updateOne(
+            { _id: availableAppliance._id },
+            { $set: updateData }
+        );
         console.log(`Appliance ${availableAppliance._id} (${availableAppliance.name}) marked as unavailable`);
         
         const newOrder = new OrderModel({

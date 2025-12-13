@@ -277,6 +277,13 @@ const Delivery = () => {
         endDate = new Date(orderData.formData.endDate);
       }
 
+      // Validate email before submitting
+      if (!userEmail || userEmail.trim() === '') {
+        alert('Email is required. Please ensure you are logged in with a valid email.');
+        setIsSubmitting(false);
+        return;
+      }
+
       // Extract appliance name - handle both object and string formats
       let applianceName = 'Unknown';
       if (orderData.appliance) {
@@ -287,9 +294,16 @@ const Delivery = () => {
         }
       }
 
+      // Validate appliance name
+      if (!applianceName || applianceName === 'Unknown') {
+        alert('Appliance information is missing. Please go back and select an appliance again.');
+        setIsSubmitting(false);
+        return;
+      }
+
       const orderToSave = {
         user: username,
-        email: userEmail || '',
+        email: userEmail,
         appliance: applianceName,
         applianceId: orderData.appliance?._id || null,
         startDate: startDate,
@@ -306,13 +320,25 @@ const Delivery = () => {
         }
       };
 
+      // Log the order data being sent for debugging
+      console.log('Submitting order with data:', {
+        user: orderToSave.user,
+        email: orderToSave.email,
+        appliance: orderToSave.appliance,
+        startDate: orderToSave.startDate,
+        endDate: orderToSave.endDate,
+        totalAmount: orderToSave.totalAmount
+      });
+
       // Save order to database
       const response = await axios.post('http://localhost:5000/addOrder', orderToSave);
       console.log('Order saved successfully:', response.data);
 
       // Notify other components that appliances have been updated
+      // This ensures the catalog refreshes immediately when an appliance is rented
       localStorage.setItem('applianceUpdated', Date.now().toString());
       window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new Event('applianceUpdated'));
 
       setIsSubmitting(false); // Clear loading state after processing
       setShowSuccess(true); // Show success message and trigger timeline animation
@@ -325,7 +351,10 @@ const Delivery = () => {
     } catch (error) {
       console.error('Error saving order:', error);
       setIsSubmitting(false);
-      alert('Failed to save order. Please try again.');
+      
+      // Show the actual error message from the server
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to save order. Please try again.';
+      alert(errorMessage);
     }
   };
 
